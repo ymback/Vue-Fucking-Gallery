@@ -1,12 +1,14 @@
 # Fucking-Gallery
 
-**A sample gallery library for you to fuck, animate loading next! [中文看这里](README-CN.md)**
+**A sample gallery library for you to fuck, 5 different animation, animate loading next! [中文看这里](README-CN.md)**
 
 [![](example/1.jpg)](example/1.jpg "Example 1")
 
 [![](example/2.jpg)](example/2.jpg "Example 2")
 
 [![](example/3.jpg)](example/3.jpg "Example 3")
+
+[![](example/4.jpg)](example/4.jpg "Example 4")
 
 ## How to use
 - Add the script and link tag in the head of html.
