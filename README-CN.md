@@ -1,6 +1,6 @@
 # 操蛋的相册
 
-**让你觉得操蛋的相册库，加载下一张图片时，你会得到乱七八糟的动画！ [English here](readme)**
+**让你觉得操蛋的相册库，加载下一张图片时，你会得到乱七八糟的动画！ [English here](README.md)**
 
 [![](example/1.jpg)](example/1.jpg "Example 1")
 
