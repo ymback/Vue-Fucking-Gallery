@@ -1,12 +1,14 @@
 # 操蛋的相册
 
-**让你觉得操蛋的相册库，加载下一张图片时，你会得到乱七八糟的动画！ [English here](README.md)**
+**让你觉得操蛋的相册库，加载下一张图片时，你会得到5种随机的乱七八糟的动画！ [English here](README.md)**
 
 [![](example/1.jpg)](example/1.jpg "Example 1")
 
 [![](example/2.jpg)](example/2.jpg "Example 2")
 
 [![](example/3.jpg)](example/3.jpg "Example 3")
+
+[![](example/4.jpg)](example/4.jpg "Example 4")
 
 ## 怎么用
 - 把Js和Css的引用放到head里面
