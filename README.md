@@ -1,6 +1,6 @@
 # Fucking-Gallery
 
-**A sample gallery library for you to fuck, animate loading next! [中文看这里](README-CN)**
+**A sample gallery library for you to fuck, animate loading next! [中文看这里](README-CN.md)**
 
 [![](example/1.jpg)](example/1.jpg "Example 1")
 
