@@ -46,7 +46,8 @@
             this.excludeSpaceHeight = this.$el.height() - this.space * (this.y - 1);
             this.acitveIndex = 0; // 正在轮播第 0 个li
             this.nextStartTime = 0;
-            this.konvaImageObject = null;
+            this.konvaImageObjectCurrent = null;
+            this.konvaImageObjectNext = null;
             this.konvaImageCanvas = null;
             this.render(false);
         },
@@ -60,9 +61,10 @@
             this.yGridLastHeight = this.$el.height() - (this.y - 1) * (this.gridHeight + this.space);
             this.excludeSpaceWidth = this.$el.width() - this.space * (this.x - 1);
             this.excludeSpaceHeight = this.$el.height() - this.space * (this.y - 1);
+            this.$parent.remove();
             this.render(true);
-            if (this.konvaImageObject !== null) {
-                var image = this.konvaImageObject;
+            if (this.konvaImageObjectCurrent !== null) {
+                var image = this.konvaImageObjectCurrent;
                 var sourceWidth = image.getWidth();
                 var sourceHeight = image.getHeight();
                 var newWidth, newHeight;
@@ -147,12 +149,15 @@
             this.initPosition();
             this.$gridA = this.$sliderGrid.find(".slider-grid-a");
             this.$gridB = this.$sliderGrid.find(".slider-grid-b");
-            if(resize){
+            if (resize) {
                 return;
             }
             this.initKonva(function () {
                 $('body').addClass('loaded');
                 $('#loader-wrapper').find('.load_title').remove();
+                setTimeout(function () {
+                    $('#loader-wrapper').remove();
+                }, 3000);
                 self.acitveIndex = self.acitveIndex === self.imageList.length - 1 ? 0 : self.acitveIndex + 1;
                 self.calcPositionAB();
                 self.bind();
@@ -201,7 +206,7 @@
             newHeight = Math.round(newHeight);
             image.setWidth(newWidth);
             image.setHeight(newHeight);
-            self.konvaImageObject = image;
+            self.konvaImageObjectCurrent = image;
             self.konvaImageCanvas = image.toCanvas();
             finishCallback();
         },
@@ -384,8 +389,7 @@
                 self.next();
                 return;
             }
-            self.konvaImageObject = image;
-            self.konvaImageCanvas = image.toCanvas();
+            self.konvaImageObjectNext = image;
             var timeDiff = new Date().getTime() - this.nextStartTime;
             if (timeDiff >= self.sliderSpeed) {
                 self.acitveIndex = self.acitveIndex === self.imageList.length - 1 ? 0 : self.acitveIndex + 1;
@@ -398,6 +402,8 @@
             }, self.sliderSpeed - timeDiff);
         },
         animate: function () {
+            this.konvaImageObjectCurrent = this.konvaImageObjectNext;
+            this.konvaImageCanvas = this.konvaImageObjectCurrent.toCanvas();
             var delayMode = parseInt(Math.random() * 2, 10);//0为每个单算，1为整行移动
             switch (parseInt(Math.random() * 3, 10)) {
                 case 0:
