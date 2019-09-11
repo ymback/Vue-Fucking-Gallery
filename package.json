@@ -3,7 +3,7 @@
   "description": "A fucking gallery for Vue",
   "version": "1.0.0",
   "author": "Anh Lai <ymback@sayyoulove.me>",
-  "license": "GNU GPL v3.0",
+  "license": "GPL-3.0-only",
   "private": false,
   "repository": "github:ymback/vue-fucking-gallery",
   "main": "dist/vue-fucking-gallery.js",

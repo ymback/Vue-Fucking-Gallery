@@ -115,10 +115,10 @@ Vue.use(FuckingGallery)
 </style>
 ```
 
-##配置选项
+## 配置选项
 所有的配置选项均是响应式的，并且除非是需要重置页面布局的，否则不会停止当前动画并直接绘制下一张
 
-###基础配置
+### 基础配置
 
 | 名称 | 类型 | 默认值 | 说明 |
 | ---- | ---- | ---- | ----------- |
@@ -146,20 +146,20 @@ Vue.use(FuckingGallery)
 | animateBeginCallback | Function | `null` | 动画开始的回调 |
 | animateEndCallback | Function | `null` | 动画结束的回调 |
 
-###animationSolution使用byCss3时有效配置
+### animationSolution使用byCss3时有效配置
 
 | 名称 | 类型 | 默认值 | 说明 |
 | ---- | ---- | ---- | ----------- |
-| css3AnimateEasing | String | `'ease'` | Css3的`animation-timing-function`参数值，支持`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'` `'cubic-bezier(*,*,*,*)'`，另外有如下两个随即选项<br/>`'sameRandom'`: 所有的动画单元随机选择使用`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'`中的一个<br/>`'allRandom'`: 每个动画单元单独随机选择使用`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'`中的一个 |
+| css3AnimateEasing | String | `'ease'` | Css3的`animation-timing-function`参数值，支持`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'` `'cubic-bezier(*,*,*,*)'`，另外有如下两个随机选项<br/>`'sameRandom'`: 所有的动画单元随机选择使用`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'`中的一个<br/>`'allRandom'`: 每个动画单元单独随机选择使用`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'`中的一个 |
 
-###animationSolution使用byCanvas时有效配置
+### animationSolution使用byCanvas时有效配置
 
 | 名称 | 类型 | 默认值 | 说明 |
 | ---- | ---- | ---- | ----------- |
-| canvasAnimateEasing | String | `'SinusoidalInOut'` | ZRender的动画时间曲线，包含`'Linear'` `'QuadraticIn'` `'QuadraticOut'` `'QuadraticInOut'` `'CubicIn'` `'CubicOut'` `'CubicInOut'` `'QuarticIn'` `'QuarticOut'` `'QuarticInOut'` `'QuinticIn'` `'QuinticOut'` `'QuinticInOut'` `'SinusoidalIn'` `'SinusoidalOut'` `'SinusoidalInOut'` `'ExponentialIn'` `'ExponentialOut'` `'ExponentialInOut'` `'CircularIn'` `'CircularOut'` `'CircularInOut'` `'ElasticIn'` `'ElasticOut'` `'ElasticInOut'` `'BackIn'` `'BackOut'` `'BackInOut'` `'BounceIn'` `'BounceOut'` `'BounceInOut'`参数值，具体效果参见[ZRender官方示例](http://echarts.baidu.com/gallery/editor.html?c=line-easing)，另外与上方`css3AnimateEasing`一样，包含`'sameRandom'`和`'allRandom'`选项 |
+| canvasAnimateEasing | String | `'SinusoidalInOut'` | ZRender的动画时间曲线，包含`'Linear'` `'QuadraticIn'` `'QuadraticOut'` `'QuadraticInOut'` `'CubicIn'` `'CubicOut'` `'CubicInOut'` `'QuarticIn'` `'QuarticOut'` `'QuarticInOut'` `'QuinticIn'` `'QuinticOut'` `'QuinticInOut'` `'SinusoidalIn'` `'SinusoidalOut'` `'SinusoidalInOut'` `'ExponentialIn'` `'ExponentialOut'` `'ExponentialInOut'` `'CircularIn'` `'CircularOut'` `'CircularInOut'` `'ElasticIn'` `'ElasticOut'` `'ElasticInOut'` `'BackIn'` `'BackOut'` `'BackInOut'` `'BounceIn'` `'BounceOut'` `'BounceInOut'`参数值<br/>具体效果参见[ZRender官方示例](http://echarts.baidu.com/gallery/editor.html?c=line-easing)，另外与上方`css3AnimateEasing`一样，包含`'sameRandom'`和`'allRandom'`选项 |
 
 ## 注意
 
 * 当你修改上方配置的值时，本组件会响应新配置，按照新配置进行绘制，其中部分参数修改后，如若正在动画期间，则动画立即结束，回调`animateEndCallback`，立即绘制下一张图片并继续进行图片加载
-* 如果使用`imageList`传入图片，但所有其中的图片都加载失败了，本组件会停止加载，直到你重新设置配置后，立即响应新配置
+* 如果使用`imageList`传入图片，但所有其中的图片都加载失败了，本组件会停止加载，直到你重新设置配置后，重新响应新配置
 * 本组件会判断连续两张图片是否完全相同，完全相同则不使用第二张图片，继续读取下一张图片

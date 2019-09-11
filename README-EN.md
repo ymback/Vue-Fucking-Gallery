@@ -116,11 +116,11 @@ Vue.use(FuckingGallery)
 </style>
 ```
 
-##Configuration(Props)
+## Configuration(Props)
 
 All configurations are responsive, and unless it's necessary to resize, animation will not stop and draw next image
 
-###Base
+### Base
 
 | Name | Type | Default | Intro |
 | ---- | ---- | ---- | ----------- |
@@ -148,13 +148,13 @@ All configurations are responsive, and unless it's necessary to resize, animatio
 | animateBeginCallback | Function | `null` | Callback when animation Start |
 | animateEndCallback | Function | `null` | Callback when animation Finished |
 
-###Valid configuration when animationSolution set to `'byCss3'`
+### Valid configuration when animationSolution set to `'byCss3'`
 
 | Name | Type | Default | Intro |
 | ---- | ---- | ---- | ----------- |
 | css3AnimateEasing | String | `'ease'` | The `animation-timing-function` value of css3, support `'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'` `'cubic-bezier(*,*,*,*)'`, and other two random config below<br/>`'sameRandom'`: all item in grid will use same config, choose one in `'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'`<br/>`'allRandom'`: each item in grid will use their own config, choose one in`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'` |
 
-###Valid configuration when animationSolution set to `'byCanvas'`
+### Valid configuration when animationSolution set to `'byCanvas'`
 
 | Name | Type | Default | Intro |
 | ---- | ---- | ---- | ----------- |
