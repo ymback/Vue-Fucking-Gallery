@@ -1,37 +1,11 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8"/>
-    <title>Gallery Demo</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js" type="text/javascript"
-            charset="utf-8"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/konva/4.0.6/konva.min.js" type="text/javascript"
-            charset="utf-8"></script>
-    <script src="/js/slider.js" type="text/javascript" charset="utf-8"></script>
-    <link rel="shortcut icon" href="/favicon.png"/>
-    <link rel="stylesheet" type="text/css" href="/css/slider.css"/>
-    <link rel="stylesheet" type="text/css" href="/css/loader.css"/>
-</head>
-<body>
-<div id="loader-wrapper">
-    <div id="loader"></div>
-    <div class="loader-section section-left"></div>
-    <div class="loader-section section-right"></div>
-    <div class="load_title">loading gallery demo<br><span>build 1.0</span></div>
-</div>
-<ul class="giveMeFuckingClassName"></ul>
-<script type="text/javascript">
-    var imageList = [
-        "/images/1.jpg",
-        "/images/2.jpg",
-        "/images/3.jpg",
-        "/images/4.jpg",
-        "/images/5.jpg"
-    ];
-    $().ready(function () {
-        var ul = $(".giveMeFuckingClassName");
-        ul.slider();
-    });
-</script>
-</body>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Vue Fucking Gallery Demo</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="/dist/build.js"></script>
+  </body>
 </html>
