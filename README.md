@@ -138,7 +138,7 @@ Vue.use(FuckingGallery)
 | animateColumnDirection | String | `'top'` | 每一列的展示方向，在以下选项中选择<br/>`'top'`: 每列中动画单元从上到下展示<br/>`'bottom'`: 每列中动画单元从下到上展示<br/>`'random'`: 随机选择`'top'`或者`'bottom'` |
 | animateShowOrder | String | `'singleItem'` | 动画单元的展示间隔,具体时间间隔由`animateSpeed`和`animateSpeedDelay`共同决定，在一下选项中选择<br/>`'singleItem'`: 每个动画单元会在上一个动画单元出现后再出现<br/>`'multiLine'`: 每一行/列的动画单元会一起出现，并按照`animateItemDirection`指定的方向开始整行/列出现<br/>`'random'`: 随机设置每个动画单元的动画开始时间 |
 | animateEffect | String | `'opacity'` | 动画单元的效果，在以下选项中选择<br/>`'opacity'`: 从完全透明到完全不透明<br/>`'none'`: 不使用效果<br/>`'sameRandom'`: 所有动画单元随机选择`'opacity'`和`'none'`中的一个<br/>`'allRandom'`: 每个动画单元单独随机选择 |
-| imageList | Array | `new Array([])` | 设置的图片列表，为空则自动使用UnSplash服务 |
+| imageList | Array | `[]` | 设置的图片列表，为空则自动使用UnSplash服务 |
 | useUnSplash | Boolean | `false` | 是否使用UnSplash服务，即使设置为`false`，如果`imageList`为空，依然会按`true`处理 |
 | unSplashTag | String | `'japan'` | UnSplash的图片标签，不同的标签会返回符合不同标签的随机图片 |
 | initLoadFinishCallback | Function | `null` | 初始化读取第一张图片完成后的回调 |

@@ -140,7 +140,7 @@ All configurations are responsive, and unless it's necessary to resize, animatio
 | animateColumnDirection | String | `'top'` | The direction in every column, use option below<br/>`'top'`: every item in column show from top 0 to bottom 0<br/>`'bottom'`: every item in column show from bottom 0 to top 0<br/>`'random'`: random choose`'top'` or `'bottom'` |
 | animateShowOrder | String | `'singleItem'` | Show all line or single item at the same time, the time between two item's animation depends on `animateSpeed` and `animateSpeedDelay`, use option below<br/>`'singleItem'`: every item show after last item show<br/>`'multiLine'`: every item in same row or column show at the same time, use the direction of `animateItemDirection` as start position<br/>`'random'`: random set every item's show time |
 | animateEffect | String | `'opacity'` | Effect of item, use the options below<br/>`'opacity'`: from `0` to `1`<br/>`'none'`: opacity always `1`<br/>`'sameRandom'`: all item will use same option, random choose one in `'opacity'` and `'none'`<br/>`'allRandom'`: each item use their own config in random |
-| imageList | Array | `new Array([])` | The image list, empty will use unsplash |
+| imageList | Array | `[]` | The image list, empty will use unsplash |
 | useUnSplash | Boolean | `false` | Use unsplash or not, notice that even set to `false`, if `imageList` is empty, this will force set to `true` |
 | unSplashTag | String | `'japan'` | The tag of unsplash, different tags will return different images which fit this tag |
 | initLoadFinishCallback | Function | `null` | Callback after first image loaded and show |
