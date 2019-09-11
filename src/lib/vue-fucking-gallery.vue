@@ -16,7 +16,7 @@
   export default {
     name: 'vue-fucking-gallery',
     $el: null,
-    data() {
+    data () {
       return {
         drawImageObjectCanvas: null,
         rootZRender: null,
@@ -223,13 +223,13 @@
       animateEndCallback: Function // Call at the end of animation.
     },
     watch: {
-      elementId(newVal, oldVal) {
+      elementId (newVal, oldVal) {
         if (newVal === oldVal) {
           return
         }
         this.$el = this.$refs.fuckingDiv
       },
-      animationSolution(newVal, oldVal) {
+      animationSolution (newVal, oldVal) {
         if (newVal === oldVal) {
           return
         }
@@ -240,7 +240,7 @@
         }
         this.resizeElement(false, true)
       },
-      showCanvas(newVal, oldVal) {
+      showCanvas (newVal, oldVal) {
         if (newVal === oldVal) {
           return
         }
@@ -251,50 +251,50 @@
         this.clearCanvas()
         this.clearCss3()
       },
-      gridMaxWidth(newVal, oldVal) {
+      gridMaxWidth (newVal, oldVal) {
         if (newVal === oldVal) {
           return
         }
         this.resizeElement(false, true)
       },
-      gridMaxHeight(newVal, oldVal) {
+      gridMaxHeight (newVal, oldVal) {
         if (newVal === oldVal) {
           return
         }
         this.resizeElement(false, true)
       },
-      gridDividerWidth(newVal, oldVal) {
+      gridDividerWidth (newVal, oldVal) {
         if (newVal === oldVal) {
           return
         }
         this.resizeElement(false, true)
       },
-      gridDividerColor(newVal, oldVal) {
+      gridDividerColor (newVal, oldVal) {
         if (newVal === oldVal) {
           return
         }
         this.redrawDividerColor()
       },
-      imageList(newVal, oldVal) {
+      imageList (newVal, oldVal) {
         if (newVal.length === oldVal.length && newVal.every(a => oldVal.some(b => a === b)) && oldVal.every(_b => newVal.some(_a => _a === _b))) {
           return
         }
         this.initImageSource()
       },
-      useUnSplash(newVal, oldVal) {
+      useUnSplash (newVal, oldVal) {
         if (newVal === oldVal) {
           return
         }
         this.initImageSource()
       },
-      unSplashTag(newVal, oldVal) {
+      unSplashTag (newVal, oldVal) {
         if (newVal === oldVal) {
           return
         }
         this.initImageSource()
       }
     },
-    mounted() {
+    mounted () {
       this.$el = this.$refs.fuckingDiv
       this.rootZRender = ZRender.init(this.$refs.fuckingByCanvas)
       this.css3Area = this.$refs.fuckingByCss3
@@ -316,10 +316,10 @@
       }
     },
     methods: {
-      start() {
+      start () {
         this.loadImage()
       },
-      clearCanvas() {
+      clearCanvas () {
         if (this.zRenderStaticImageGroup !== null) {
           this.rootZRender.remove(this.zRenderStaticImageGroup)
           this.zRenderStaticImageGroup = null
@@ -336,7 +336,7 @@
           clearTimeout(this.waitAnimationFinishTimer)
         }
       },
-      clearCss3() {
+      clearCss3 () {
         this.css3Area.innerHTML = ''
         if (this.css3GridParent !== null) {
           if (this.isIE()) {
@@ -349,13 +349,13 @@
         this.css3SlideGridAList = null
         this.css3SlideGridBList = null
       },
-      reset() {
+      reset () {
         this.clearCanvas()
         this.clearCss3()
         this.currentImageObject = null
         this.nextImageObject = null
       },
-      initImageSource() {
+      initImageSource () {
         this.activeImageListIndex = 0
         let url = 'https://source.unsplash.com/random/'
         url += this.$el.offsetWidth
@@ -368,7 +368,7 @@
         this.unSplashUrl = url
         this.useUnSplashService = this.useUnSplash === true || (this.imageList === null || this.imageList.length < 1)
       },
-      loadImage(notResetStartTime) {
+      loadImage (notResetStartTime) {
         if (this.isLoadingImage === true) {
           return
         }
@@ -397,7 +397,7 @@
           this.loadImage(true)
         }
       },
-      imageLoaded(imageObj) {
+      imageLoaded (imageObj) {
         this.isLoadingImage = false
         if (!this.showCanvas) {
           return
@@ -445,7 +445,7 @@
           this.startAnimation()
         }, this.slideWaitTime - timeDiff)
       },
-      resizeElement(windowResize, needRedraw) {
+      resizeElement (windowResize, needRedraw) {
         this.rowCount = Math.floor((this.$el.offsetWidth + this.gridDividerWidth) / (this.gridMaxWidth + this.gridDividerWidth))
         this.columnCount = Math.floor((this.$el.offsetHeight + this.gridDividerWidth) / (this.gridMaxHeight + this.gridDividerWidth))
         this.gridItemCount = this.rowCount * this.columnCount
@@ -462,7 +462,7 @@
         }
         this.resizeCss3(windowResize, needRedraw)
       },
-      resizeCanvas(windowResize, needRedraw) {
+      resizeCanvas (windowResize, needRedraw) {
         this.rootZRender.resize({
           width: this.$el.offsetWidth,
           height: this.$el.offsetHeight
@@ -471,7 +471,7 @@
           this.redraw(windowResize === true)
         }
       },
-      resizeCss3(windowResize, needRedraw) {
+      resizeCss3 (windowResize, needRedraw) {
         this.clearCss3()
         let gridHtml = ''
         let htmlTemp = {
@@ -504,7 +504,7 @@
           this.redraw(windowResize === true)
         }
       },
-      redraw(forceRedraw) {
+      redraw (forceRedraw) {
         // If set force redraw, then any animation will stop and redraw the new image.
         if (!this.showCanvas) {
           return
@@ -520,7 +520,7 @@
         }
         this.redrawCss3(forceRedraw)
       },
-      redrawCanvas(forceRedraw) {
+      redrawCanvas (forceRedraw) {
         if (this.animationRunning) {
           if (forceRedraw !== true) {
             return
@@ -555,7 +555,7 @@
         this.rootZRender.add(this.zRenderStaticImageGroup)
         this.rootZRender.refreshImmediately()
       },
-      redrawCss3(forceRedraw) {
+      redrawCss3 (forceRedraw) {
         if (this.animationRunning) {
           if (forceRedraw !== true) {
             return
@@ -582,7 +582,7 @@
           gridItem.style['-o-background-size'] = '100% 100%'
         })
       },
-      resetGridB() {
+      resetGridB () {
         ZRender.util.each(this.css3SlideGridBList, (gridItem, index) => {
           gridItem.style['display'] = 'none'
           gridItem.style['background-image'] = ''
@@ -614,7 +614,7 @@
           gridItem.style['left'] = 0 + 'px'
         })
       },
-      redrawDividerColor() {
+      redrawDividerColor () {
         if (this.rootZRender !== null) {
           this.rootZRender.dom.style.backgroundColor = this.gridDividerColor
         }
@@ -622,7 +622,7 @@
           this.css3Area.style.backgroundColor = this.gridDividerColor
         }
       },
-      startAnimation() {
+      startAnimation () {
         if (this.useAnimate !== true) {
           this.noUseAnimationFinished()
           return
@@ -642,7 +642,7 @@
           this.animationFinished()
         }, maxRunTime + 250)
       },
-      animationFinished() {
+      animationFinished () {
         this.animationRunning = false
         this.currentImageObject = this.nextImageObject
         this.nextImageObject = null
@@ -657,7 +657,7 @@
         this.redraw()
         this.loadImage()
       },
-      noUseAnimationFinished() {
+      noUseAnimationFinished () {
         this.animationRunning = false
         this.currentImageObject = this.nextImageObject
         this.nextImageObject = null
@@ -668,7 +668,7 @@
         this.redraw()
         this.loadImage()
       },
-      getBaseAnimationConfig() {
+      getBaseAnimationConfig () {
         let resultConfig = {}
         resultConfig.animateItemDirection = this.animateItemDirection
         resultConfig.animateShowOrder = this.animateShowOrder
@@ -725,7 +725,7 @@
         resultConfig.animateEffectCanUseArray = animateEffectCanUseArray
         return resultConfig
       },
-      getItemSingleConfig(item, baseConfig, index) {
+      getItemSingleConfig (item, baseConfig, index) {
         let storeConfig = {}
         if (item !== null) {
           storeConfig = {x: item.style.x, y: item.style.y}
@@ -768,7 +768,7 @@
         storeConfig.delayTime = this.calcDelayTime(baseConfig, index)
         return storeConfig
       },
-      rotationSnakeSort() {
+      rotationSnakeSort () {
         let k = 1
         let result = []
         for (let i = 0; i < this.columnCount; i++) {
@@ -798,7 +798,7 @@
         }
         this.snakeSort = result
       },
-      calcDelayTime(config, index) {
+      calcDelayTime (config, index) {
         if (config.animateItemDirection === 'snake') {
           let newIndex = this.snakeSort[Math.floor(index / this.rowCount)][index % this.rowCount]
           return Math.ceil(this.animateSpeed * newIndex / (this.animateSpeedDelay * 0.2))
@@ -845,7 +845,7 @@
         }
         return Math.ceil(this.animateSpeed * parseInt(Math.random() * this.animateSpeedDelay, 10))
       },
-      calcAnimationAndReturnMaxRunTimeByCanvas() {
+      calcAnimationAndReturnMaxRunTimeByCanvas () {
         if (this.zRenderAnimationImageGroup !== null) {
           this.rootZRender.remove(this.zRenderAnimationImageGroup)
           this.zRenderAnimationImageGroup = null
@@ -909,7 +909,7 @@
         })
         return maxRunTime
       },
-      calcAnimationAndReturnMaxRunTimeByCss3() {
+      calcAnimationAndReturnMaxRunTimeByCss3 () {
         this.resetGridB()
         let canvasList = this.getImageCanvasListForCss3(this.nextImageObject)
         let maxRunTime = 0
@@ -984,7 +984,7 @@
         })
         return maxRunTime
       },
-      calcImageNewSizeToCoverScreen(imageObject) {
+      calcImageNewSizeToCoverScreen (imageObject) {
         let sourceWidth = imageObject.width
         let sourceHeight = imageObject.height
         let newWidth = 0
@@ -1007,7 +1007,7 @@
         }
         return {height: newHeight, width: newWidth, fromTop: fromTop, fromLeft: fromLeft}
       },
-      getImageObjectCanvas(imageObject, calcImageNewSize) {
+      getImageObjectCanvas (imageObject, calcImageNewSize) {
         let zRenderImage = new ZRender.Image({
           cursor: null,
           style: {
@@ -1027,7 +1027,7 @@
         zRender.dispose()
         return this.drawImageObjectCanvas
       },
-      getImageCanvasListForCss3(imageObject) {
+      getImageCanvasListForCss3 (imageObject) {
         let canvasList = []
         let newSize = this.calcImageNewSizeToCoverScreen(imageObject)
         let imageCanvas = this.getImageObjectCanvas(imageObject, newSize)
@@ -1045,7 +1045,7 @@
         }
         return canvasList
       },
-      getZRenderImageListForCanvas(imageObject) {
+      getZRenderImageListForCanvas (imageObject) {
         let zRenderImageList = []
         let newSize = this.calcImageNewSizeToCoverScreen(imageObject)
         let imageCanvas = this.getImageObjectCanvas(imageObject, newSize)
@@ -1081,19 +1081,19 @@
         zCanvasContext.drawImage(imageCanvas, imgLeft, imgTop, imageWidth, imageHeight, 0, 0, imageWidth, imageHeight)
         return zCanvas
       },
-      getImageUrl() {
+      getImageUrl () {
         return this.useUnSplashService
           ? this.unSplashUrl + '&sig=' + new Date().getTime()
           : this.imageList[this.activeImageListIndex]
       },
-      setActiveImageListToNext() {
+      setActiveImageListToNext () {
         if (this.useUnSplashService) {
           this.activeImageListIndex = 0
           return
         }
         this.activeImageListIndex = this.activeImageListIndex === this.imageList.length - 1 ? 0 : this.activeImageListIndex + 1
       },
-      getCanvasRandomEasing() {
+      getCanvasRandomEasing () {
         let easingArray = ['Linear', 'QuadraticIn', 'QuadraticOut', 'QuadraticInOut',
           'CubicIn', 'CubicOut', 'CubicInOut', 'QuarticIn', 'QuarticOut',
           'QuarticInOut', 'QuinticIn', 'QuinticOut', 'QuinticInOut', 'SinusoidalIn',
@@ -1103,11 +1103,11 @@
           'BackInOut', 'BounceIn', 'BounceOut', 'BounceInOut']
         return easingArray[parseInt(Math.random() * easingArray.length, 10)]
       },
-      getCss3RandomEasing() {
+      getCss3RandomEasing () {
         let easingArray = ['linear', 'ease', 'ease-in', 'ease-out', 'ease-in-out']
         return easingArray[parseInt(Math.random() * easingArray.length, 10)]
       },
-      isIE() {
+      isIE () {
         return !!window.ActiveXObject || 'ActiveXObject' in window || (/Trident\/7\./).test(navigator.userAgent)
       }
     }
