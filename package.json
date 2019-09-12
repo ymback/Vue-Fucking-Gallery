@@ -1,7 +1,7 @@
 {
   "name": "vue-fucking-gallery",
   "description": "A fucking gallery for Vue",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Anh Lai <ymback@sayyoulove.me>",
   "license": "GPL-3.0-only",
   "private": false,

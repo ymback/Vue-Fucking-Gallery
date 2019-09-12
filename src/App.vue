@@ -4,7 +4,7 @@
       <div id="loader"></div>
       <div class="loader-section section-left"></div>
       <div class="loader-section section-right"></div>
-      <div class="load-title">loading vue fucking gallery demo<br><span>build 1.0.0</span></div>
+      <div class="load-title">loading vue fucking gallery demo<br><span>build 1.0.1</span></div>
     </div>
     <vue-fucking-gallery :element-id="id" :show-canvas="showCanvas"
                      :animation-solution="animationSolution"
