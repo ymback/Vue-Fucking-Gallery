@@ -28,6 +28,8 @@ For english user, read [here](README-EN.md)
 
 ## 示例
 
+[示例地址](http://gallery.sayyoulove.me/#/)  
+  
 [![](example/1.jpg)](example/1.jpg "示例 1")
 [![](example/2.jpg)](example/2.jpg "示例 2")
 [![](example/3.jpg)](example/3.jpg "示例 3")

@@ -28,6 +28,8 @@ A gallery component based on Vue, draw canvas with [ZRender](https://github.com/
 
 ## Example
 
+[Example Site](http://gallery.sayyoulove.me/#/)  
+  
 [![](example/1.jpg)](example/1.jpg "Example 1")
 [![](example/2.jpg)](example/2.jpg "Example 2")
 [![](example/3.jpg)](example/3.jpg "Example 3")
