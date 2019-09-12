@@ -3,7 +3,7 @@
 [![GitHub forks](https://img.shields.io/github/forks/ymback/vue-fucking-gallery.svg?style=flat-square)](https://github.com/ymback/vue-fucking-gallery/network)
 [![GitHub last commit](https://img.shields.io/github/last-commit/ymback/vue-fucking-gallery.svg?style=flat-square)](https://github.com/ymback/vue-fucking-gallery)  
 [![npm](https://img.shields.io/npm/v/vue-fucking-gallery.svg)](https://www.npmjs.com/package/vue-fucking-gallery)
-[![npm](https://img.shields.io/npm/l/vue-fucking-gallery.svg?maxAge=2592000)](https://www.npmjs.com/package/vue-fucking-gallery)
+[![npm](https://img.shields.io/npm/l/vue-fucking-gallery.svg)](https://www.npmjs.com/package/vue-fucking-gallery)
 
 # Vue Fucking Gallery
 
