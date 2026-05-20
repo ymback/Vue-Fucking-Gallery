@@ -299,60 +299,8 @@ async function loadImage(notResetStartTime) {
   let imageObj = new Image()
   imageObj.setAttribute('crossOrigin', 'Anonymous')
 
-  let finalUrl = ''
-
-  if (useUnSplashService.value) {
-    // 获取当前容器的真实物理尺寸
-    const containerWidth = fuckingDiv.value.offsetWidth || window.innerWidth
-    const containerHeight = fuckingDiv.value.offsetHeight || window.innerHeight
-
-    // 1. 动态判断请求横图还是竖图
-    let orientation = 'landscape'
-    if (containerHeight > containerWidth) {
-      orientation = 'portrait'
-    } else if (containerHeight === containerWidth) {
-      orientation = 'squarish'
-    }
-
-    if (props.unSplashAccessKey) {
-      try {
-        // 请求 API 时带上动态算出的 orientation
-        const res = await fetch(`https://api.unsplash.com/photos/random?client_id=${props.unSplashAccessKey}&query=${props.unSplashTag}&orientation=${orientation}`)
-        if (!res.ok) throw new Error(`Unsplash API Error: ${res.status}`)
-        const data = await res.json()
-
-        // 2. 极致高清图方案 (结合 dpr 视网膜屏幕像素比)
-        const dpr = window.devicePixelRatio || 1
-        const targetW = Math.round(containerWidth * dpr)
-        const targetH = Math.round(containerHeight * dpr)
-
-        // 使用 raw 原始地址，通过 Imgix 引擎动态裁剪出完美适配当前屏幕的高清图 (q=85 保证画质与体积平衡)
-        finalUrl = `${data.urls.raw}&w=${targetW}&h=${targetH}&fit=crop&q=85&auto=format`
-
-      } catch (e) {
-        console.warn('⚠️ Unsplash API 请求失败或超限，已自动降级为 Picsum 占位图。', e.message)
-        // 假设这是计算出的目标宽高
-        const targetW = Math.round(containerWidth * (window.devicePixelRatio || 1))
-        const targetH = Math.round(containerHeight * (window.devicePixelRatio || 1))
-
-        // 把原来的 picsum.photos 替换为 loremflickr，并传入用户的 tag
-        const fallbackTag = props.unSplashTag || 'landscape'
-        finalUrl = `https://loremflickr.com/${targetW}/${targetH}/${fallbackTag}?random=${new Date().getTime()}`
-      }
-    } else {
-      // 假设这是计算出的目标宽高
-      const targetW = Math.round(containerWidth * (window.devicePixelRatio || 1))
-      const targetH = Math.round(containerHeight * (window.devicePixelRatio || 1))
-
-      // 把原来的 picsum.photos 替换为 loremflickr，并传入用户的 tag
-      const fallbackTag = props.unSplashTag || 'landscape'
-      finalUrl = `https://loremflickr.com/${targetW}/${targetH}/${fallbackTag}?random=${new Date().getTime()}`
-    }
-  } else {
-    finalUrl = props.imageList[activeImageListIndex.value]
-  }
-
-  imageObj.src = finalUrl
+  // 直接调用抽取后的生成逻辑
+  imageObj.src = await getFinalImageUrl();
 
   if (imageObj.complete) {
     imageLoaded(imageObj)
@@ -363,12 +311,53 @@ async function loadImage(notResetStartTime) {
     loadErrorTimes.value++
     if (useUnSplashService.value === false && loadErrorTimes.value > props.imageList.length) {
       isLoadingImage.value = false
-      console.error('图片列表全部加载失败，请检查 imageList。')
-      return
+      console.error('All images in the imageList failed to load. Please verify your imageList configuration.');
     }
     setActiveImageListToNext()
     loadImage(true)
   }
+}
+
+// 1. 获取容器尺寸与 DPR 适配后的物理像素
+function getTargetDimensions() {
+  const dpr = window.devicePixelRatio || 1;
+  return {
+    width: Math.round((fuckingDiv.value.offsetWidth || window.innerWidth) * dpr),
+    height: Math.round((fuckingDiv.value.offsetHeight || window.innerHeight) * dpr)
+  };
+}
+
+async function getFinalImageUrl() {
+  const { width, height } = getTargetDimensions();
+  // 核心：如果有 tag 就用 tag，没有就让服务随机
+  const tag = props.unSplashTag;
+
+  // 1. 优先尝试 Unsplash (带标签)
+  if (useUnSplashService.value && props.unSplashAccessKey) {
+    let orientation = (height > width) ? 'portrait' : (height === width ? 'squarish' : 'landscape');
+    const queryParam = tag ? `&query=${tag}` : '';
+
+    try {
+      const res = await fetch(`https://api.unsplash.com/photos/random?client_id=${props.unSplashAccessKey}${queryParam}&orientation=${orientation}`);
+      if (!res.ok) throw new Error(`Unsplash API Error: ${res.status}`);
+      const data = await res.json();
+      return `${data.urls.raw}&w=${width}&h=${height}&fit=crop&q=85&auto=format`;
+    } catch (e) {
+      console.warn('⚠️ Unsplash API failed, falling back to tag-based placeholder.', e.message);
+    }
+  }
+
+  // 2. 明确使用本地列表
+  if (!useUnSplashService.value && props.imageList?.length > 0) {
+    return props.imageList[activeImageListIndex.value];
+  }
+
+  // 3. 降级方案 (LoremFlickr)
+  // 如果 tag 存在，我们就带上它；如果 tag 为空，就彻底随机
+  const tagPath = tag ? `/${tag}` : '';
+  const timestamp = new Date().getTime();
+
+  return `https://loremflickr.com/${width}/${height}${tagPath}?random=${timestamp}`;
 }
 
 function imageLoaded(imageObj) {
