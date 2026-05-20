@@ -1,38 +1,45 @@
 {
   "name": "vue-fucking-gallery",
-  "description": "A fucking gallery for Vue",
-  "version": "1.0.1",
+  "version": "2.0.0",
+  "description": "A fucking gallery for Vue 3",
   "author": "Anh Lai <ymback@sayyoulove.me>",
   "license": "GPL-3.0-only",
   "private": false,
   "repository": "github:ymback/vue-fucking-gallery",
-  "main": "dist/vue-fucking-gallery.js",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/vue-fucking-gallery.umd.cjs",
+  "module": "./dist/vue-fucking-gallery.js",
+  "exports": {
+    ".": {
+      "import": "./dist/vue-fucking-gallery.js",
+      "require": "./dist/vue-fucking-gallery.umd.cjs"
+    },
+    "./style.css": "./dist/style.css"
+  },
   "scripts": {
-    "dev": "cross-env NODE_ENV=development webpack-dev-server --open --hot",
-    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^2.5.11",
-    "zrender": "^4.1.0"
+    "zrender": "^6.1.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.3",
+    "sass": "^1.99.0",
+    "vite": "^5.1.0",
+    "vite-plugin-css-injected-by-js": "^3.5.2",
+    "vue": "^3.4.15"
   },
   "browserslist": [
     "> 1%",
     "last 2 versions",
-    "not ie <= 9"
-  ],
-  "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.6.0",
-    "babel-preset-stage-3": "^6.24.1",
-    "cross-env": "^5.0.5",
-    "css-loader": "^0.28.7",
-    "file-loader": "^1.1.4",
-    "node-sass": "^4.5.3",
-    "sass-loader": "^6.0.6",
-    "vue-loader": "^13.0.5",
-    "vue-template-compiler": "^2.4.4",
-    "webpack": "^3.6.0",
-    "webpack-dev-server": "^2.9.1"
-  }
+    "not dead"
+  ]
 }

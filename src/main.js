@@ -1,10 +1,10 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import App from './App.vue'
-import VueFuckingGallery from './lib/vue-fucking-gallery.js'
+import VueFuckingGallery from './components/VueFuckingGallery.js' // 指向你上面的那个文件
 
-Vue.use(VueFuckingGallery)
+const app = createApp(App)
 
-new Vue({
-  el: '#app',
-  render: h => h(App)
-})
+// 使用插件
+app.use(VueFuckingGallery)
+
+app.mount('#app')

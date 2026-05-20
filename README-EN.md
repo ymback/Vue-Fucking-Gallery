@@ -5,10 +5,12 @@
 [![npm](https://img.shields.io/npm/v/vue-fucking-gallery.svg)](https://www.npmjs.com/package/vue-fucking-gallery)
 [![npm](https://img.shields.io/npm/l/vue-fucking-gallery.svg)](https://www.npmjs.com/package/vue-fucking-gallery)
 
-# Vue Fucking Gallery
+# Vue Fucking Gallery (v2.x)
 
-A gallery component based on Vue, draw canvas with [ZRender](https://github.com/ecomfe/zrender)  
+A gallery component based on Vue 3, draw canvas with [ZRender](https://github.com/ecomfe/zrender)  
 中文文档, 看[这里](README.md)
+
+> ⚠️ **Notice:** v2.x version has fully embraced the **Vue 3 + Vite** modern frontend architecture. If your project is still using Vue 2, please install and use the v1.x version.
 
 ## Intro
 
@@ -25,6 +27,8 @@ A gallery component based on Vue, draw canvas with [ZRender](https://github.com/
 * Support opacity setting
 * Support setting divider width and color
 * Special 'Snake' mode
+* **[v2.0 Upgrade]** Integrated Unsplash official API. Dynamically calculates container ratio and combines with `devicePixelRatio` to fetch Retina-ready, perfectly fitted high-res images.
+* **[v2.0 Upgrade]** Enterprise-level fallback: When the Unsplash API key is missing or request limit is exceeded, it automatically gracefully downgrades to `LoremFlickr` placeholders. No more blank screens!
 
 ## Example
 
@@ -37,7 +41,7 @@ A gallery component based on Vue, draw canvas with [ZRender](https://github.com/
 
 ## Browser support
 
-All modern browser,Internet Explorer 11,not tested on other browser
+All modern browsers, Internet Explorer 11, not tested on other browsers.
 
 ## Install
 
@@ -47,14 +51,18 @@ All modern browser,Internet Explorer 11,not tested on other browser
 $ npm install vue-fucking-gallery
 ```
 
-## Import
+## Import (Vue 3 Style)
 
 ``` javascript
-import Vue from 'vue'
-import FuckingGallery from 'vue-fucking-gallery'
+import { createApp } from 'vue'
+import App from './App.vue'
+import VueFuckingGallery from 'vue-fucking-gallery'
 
-Vue.use(FuckingGallery)
+const app = createApp(App)
+app.use(VueFuckingGallery)
+app.mount('#app')
 ```
+*(Note: v2.x has CSS injected into JS by default. You can use it directly as imported above without importing the stylesheet separately.)*
 
 ## Use
 
@@ -101,6 +109,7 @@ Vue.use(FuckingGallery)
         :image-list="imageList"
         :use-un-splash="useUnSplash"
         :un-splash-tag="unSplashTag"
+        :un-splash-access-key="unSplashAccessKey"
         :init-load-finish-callback="initLoadFinishCallback"
         :photo-load-success-callback="photoLoadSuccessCallback"
         :animate-begin-callback="animateBeginCallback"
@@ -145,6 +154,7 @@ All configurations are responsive, and unless it's necessary to resize, animatio
 | imageList | Array | `[]` | The image list, empty will use unsplash |
 | useUnSplash | Boolean | `false` | Use unsplash or not, notice that even set to `false`, if `imageList` is empty, this will force set to `true` |
 | unSplashTag | String | `'japan'` | The tag of unsplash, different tags will return different images which fit this tag |
+| unSplashAccessKey | String | `''` | **(v2.0 New)** Your Unsplash Access Key. Get it at [Unsplash Developers](https://unsplash.com/developers). If empty or request limit exceeded, it will automatically downgrade to use free placeholder image services. |
 | initLoadFinishCallback | Function | `null` | Callback after first image loaded and show |
 | photoLoadSuccessCallback | Function | `null` | Callback after image loaded, include the first image in init |
 | animateBeginCallback | Function | `null` | Callback when animation Start |
@@ -160,10 +170,11 @@ All configurations are responsive, and unless it's necessary to resize, animatio
 
 | Name | Type | Default | Intro |
 | ---- | ---- | ---- | ----------- |
-| canvasAnimateEasing | String | `'SinusoidalInOut'` | The easing functions of ZRender, include `'Linear'` `'QuadraticIn'` `'QuadraticOut'` `'QuadraticInOut'` `'CubicIn'` `'CubicOut'` `'CubicInOut'` `'QuarticIn'` `'QuarticOut'` `'QuarticInOut'` `'QuinticIn'` `'QuinticOut'` `'QuinticInOut'` `'SinusoidalIn'` `'SinusoidalOut'` `'SinusoidalInOut'` `'ExponentialIn'` `'ExponentialOut'` `'ExponentialInOut'` `'CircularIn'` `'CircularOut'` `'CircularInOut'` `'ElasticIn'` `'ElasticOut'` `'ElasticInOut'` `'BackIn'` `'BackOut'` `'BackInOut'` `'BounceIn'` `'BounceOut'` `'BounceInOut'`, see [ZRender official example of easing functions](http://echarts.baidu.com/gallery/editor.html?c=line-easing), like above `css3AnimateEasing`, include `'sameRandom'` and `'allRandom'` to set random |
+| canvasAnimateEasing | String | `'SinusoidalInOut'` | The easing functions of ZRender, include `'Linear'` `'QuadraticIn'` `'QuadraticOut'` `'QuadraticInOut'` `'CubicIn'` `'CubicOut'` `'CubicInOut'` `'QuarticIn'` `'QuarticOut'` `'QuarticInOut'` `'QuinticIn'` `'QuinticOut'` `'QuinticInOut'` `'SinusoidalIn'` `'SinusoidalOut'` `'SinusoidalInOut'` `'ExponentialIn'` `'ExponentialOut'` `'ExponentialInOut'` `'CircularIn'` `'CircularOut'` `'CircularInOut'` `'ElasticIn'` `'ElasticOut'` `'ElasticInOut'` `'BackIn'` `'BackOut'` `'BackInOut'` `'BounceIn'` `'BounceOut'` `'BounceInOut'`, see [ZRender official example of easing functions](https://ecomfe.github.io/zrender-doc/public/examples/animation.html), like above `css3AnimateEasing`, include `'sameRandom'` and `'allRandom'` to set random |
 
 ## Notice
 
 * When change config above, it will use new config to draw immediately, some of configs will force stop animation and draw next image, then load image normally, with call of `animateEndCallback`
 * If use `imageList`, but all of the image in list load failed, this component will stop load until you set new config
 * If the image showing now is equal to the next image loaded, it will not use the next image, but still load the one after next
+* When the browser window triggers a `resize` event, the system will automatically discard the background image with mismatched proportions and dynamically fetch a new, perfectly matched image based on the new window size for a seamless replacement.
