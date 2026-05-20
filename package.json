@@ -16,8 +16,7 @@
     ".": {
       "import": "./dist/vue-fucking-gallery.js",
       "require": "./dist/vue-fucking-gallery.umd.cjs"
-    },
-    "./style.css": "./dist/style.css"
+    }
   },
   "scripts": {
     "dev": "vite",
