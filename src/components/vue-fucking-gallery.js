@@ -1,4 +1,4 @@
-import VueFuckingGalleryLib from './VueFuckingGallery.vue'
+import VueFuckingGalleryLib from './vue-fucking-gallery.vue'
 
 // 1. 具名导出，支持局部引入：import { VueFuckingGallery } from 'vue-fucking-gallery'
 export const VueFuckingGallery = VueFuckingGalleryLib

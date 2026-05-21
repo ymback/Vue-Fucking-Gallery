@@ -4,18 +4,16 @@
       <div id="loader"></div>
       <div class="loader-section section-left"></div>
       <div class="loader-section section-right"></div>
-      <div class="load-title">loading vue fucking gallery demo<br><span>build 2.0.0</span></div>
+      <div class="load-title">Loading Vue Fucking Gallery Demo<br><span>Build 3.0.0</span></div>
     </div>
 
-    <VueFuckingGallery :element-id="id" :show-canvas="showCanvas" :animation-solution="animationSolution"
-      :grid-max-width="gridMaxWidth" :grid-max-height="gridMaxHeight" :grid-divider-width="gridDividerWidth"
-      :grid-divider-color="gridDividerColor" :slide-wait-time="slideWaitTime" :use-animate="useAnimate"
-      :animate-speed="animateSpeed" :animate-speed-delay="animateSpeedDelay"
+    <VueFuckingGallery :element-id="id" :grid-max-width="gridMaxWidth" :grid-max-height="gridMaxHeight"
+      :grid-divider-width="gridDividerWidth" :grid-divider-color="gridDividerColor" :slide-wait-time="slideWaitTime"
+      :use-animate="useAnimate" :animate-speed="animateSpeed" :animate-speed-delay="animateSpeedDelay"
       :animate-item-direction="animateItemDirection" :animate-row-direction="animateRowDirection"
       :animate-column-direction="animateColumnDirection" :animate-show-order="animateShowOrder"
-      :animate-effect="animateEffect" :canvas-animate-easing="canvasAnimateEasing"
-      :css3-animate-easing="css3AnimateEasing" :image-list="imageList" :use-un-splash="useUnSplash"
-      :un-splash-tag="unSplashTag" :un-splash-access-key="unSplashAccessKey"
+      :animate-effect="animateEffect" :canvas-animate-easing="canvasAnimateEasing" :image-list="imageList"
+      :use-un-splash="useUnSplash" :un-splash-tag="unSplashTag" :un-splash-access-key="unSplashAccessKey"
       :init-load-finish-callback="initLoadFinishCallback" :photo-load-success-callback="photoLoadSuccessCallback"
       :animate-begin-callback="animateBeginCallback" :animate-end-callback="animateEndCallback" />
   </div>
@@ -24,7 +22,7 @@
 <script setup>
 import { ref } from 'vue'
 // 确保这里的路径和你实际存放组件的路径一致
-import VueFuckingGallery from './components/VueFuckingGallery.vue'
+import VueFuckingGallery from './components/vue-fucking-gallery.vue'
 
 // ==========================================
 // 1. 模板引用 DOM
@@ -35,8 +33,6 @@ const loaderWrapper = ref(null)
 // 2. 响应式配置参数 (替代 data)
 // ==========================================
 const id = ref('gallery')
-const animationSolution = ref('byCanvas')
-const showCanvas = ref(true)
 const gridMaxWidth = ref(180)
 const gridMaxHeight = ref(180)
 const gridDividerWidth = ref(0)
@@ -51,7 +47,6 @@ const animateColumnDirection = ref('top')
 const animateShowOrder = ref('singleItem')
 const animateEffect = ref('opacity')
 const canvasAnimateEasing = ref('SinusoidalInOut')
-const css3AnimateEasing = ref('ease')
 const imageList = ref([])
 const useUnSplash = ref(true)
 const unSplashTag = ref('japan')
@@ -99,8 +94,8 @@ const animateBeginCallback = () => {
   // console.log('Animation began')
 }
 
-const animateEndCallback = () => {
-  // console.log('Animation ended')
+const animateEndCallback = (stats) => {
+  // console.log('Animation ended', stats)
 }
 </script>
 

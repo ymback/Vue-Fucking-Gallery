@@ -20,17 +20,16 @@ export default defineConfig({
 
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/components/VueFuckingGallery.js'),
+      entry: resolve(__dirname, 'src/components/vue-fucking-gallery.js'),
       name: 'VueFuckingGallery',
       fileName: 'vue-fucking-gallery'
     },
     rollupOptions: {
-      external: ['vue', 'zrender'],
+      external: ['vue'],
       output: {
         exports: 'named',
         globals: {
-          vue: 'Vue',
-          zrender: 'ZRender'
+          vue: 'Vue'
         }
       }
     }

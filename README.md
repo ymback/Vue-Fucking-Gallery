@@ -5,21 +5,20 @@
 [![npm](https://img.shields.io/npm/v/vue-fucking-gallery.svg)](https://www.npmjs.com/package/vue-fucking-gallery)
 [![npm](https://img.shields.io/npm/l/vue-fucking-gallery.svg)](https://www.npmjs.com/package/vue-fucking-gallery)
 
-# Vue Fucking Gallery (v2.x)
+# Vue Fucking Gallery (v3.x)
 
-基于 Vue 3 的相册组件，Canvas 使用 [ZRender](https://github.com/ecomfe/zrender)  
+基于 Vue 3 的相册组件，使用WebGL绘制
 For english user, read [here](README-EN.md)
 
-> ⚠️ **注意：** v2.x 版本已切换至 **Vue 3 + Vite** 架构，如果你的项目仍在使用 Vue 2，请安装使用 v1.x 版本。
+> ⚠️ **注意：** v3.x 版本已切换至 **Vue 3 + Vite** 架构，如果你的项目仍在使用 Vue 2，请安装使用 v1.x 版本。
 
 ## 说明
 
 * 这是一个会让你不停骂"操"的操蛋相册组件库，配置的时候，你会骂一句"操"，搞完了刷新网页，你还会骂一句"操"！
 * 你可以完全不配置任何选项，直接使用
-* 支持 Css3 及 Canvas 两种动画播放模式，并可通过配置变换
 * 支持动画持续时间、等待时间配置
 * 支持设置动画单元的行进方向，支持流水式进入及整行/整列进入
-* 使用 Css3 时支持所有的 Css3 动画时间曲线，使用 Canvas 时支持所有的 ZRender 动画时间曲线
+* 支持大量预设动画时间曲线
 * 大部分参数支持随机配置
 * 支持配置图片地址数组，或使用[Unsplash](https://unsplash.com/)随机图片
 * [Unsplash](https://unsplash.com/)随机图片支持标签设置
@@ -27,8 +26,8 @@ For english user, read [here](README-EN.md)
 * 支持图片动画期间透明度设置
 * 支持分割线及其颜色配置
 * 独特的贪吃蛇模式
-* **[v2.0 升级]** 接入 Unsplash 官方 API，动态计算容器比例，结合 `devicePixelRatio` 智能拉取 Retina 级完美适配的高清美图。
-* **[v2.0 升级]** 当 Unsplash 密钥未配置或请求失败超限时，自动无缝降级至 `LoremFlickr` 占位图，保证页面绝不白屏！
+* 接入 Unsplash 官方 API，动态计算容器比例，结合 `devicePixelRatio` 智能拉取 Retina 级完美适配的高清美图。
+* 当 Unsplash 密钥未配置或请求失败超限时，自动无缝降级至 `LoremFlickr` 占位图，保证页面绝不白屏！
 
 ## 示例
 
@@ -41,7 +40,14 @@ For english user, read [here](README-EN.md)
 
 ## 浏览器支持
 
-所有现代浏览器，Internet Explorer 11，其他未测试。
+所有现代浏览器，需支持 WebGL 2.0。
+
+**性能特性：**
+- 采用 WebGL 2.0 + 双缓冲渲染管线，优化 Android 设备性能
+- 动态属性使用 FLOAT32 数据类型，规避低端 Mali/Adreno 驱动慢路径
+- 静态底图缓存（FBO）机制，减少动画期间的重复绘制
+- 自动单帧混合渲染和 dirty rectangle 优化
+- Safari 初始化兼容性修复，确保首屏渲染正确
 
 ## 安装
 
@@ -62,7 +68,6 @@ const app = createApp(App)
 app.use(VueFuckingGallery)
 app.mount('#app')
 ```
-*(注：v2.x 已默认将 CSS 注入到 JS 中，按上述方式引入即可直接使用，无需单独导入样式表。)*
 
 ## 使用
 
@@ -89,8 +94,6 @@ app.mount('#app')
 <template>
     <vue-fucking-gallery 
         :element-id="id" 
-        :show-canvas="showCanvas"
-        :animation-solution="animationSolution"
         :grid-max-width="gridMaxWidth"
         :grid-max-height="gridMaxHeight"
         :grid-divider-width="gridDividerWidth"
@@ -105,7 +108,6 @@ app.mount('#app')
         :animate-show-order="animateShowOrder"
         :animate-effect="animateEffect"
         :canvas-animate-easing="canvasAnimateEasing"
-        :css3-animate-easing="css3AnimateEasing"
         :image-list="imageList"
         :use-un-splash="useUnSplash"
         :un-splash-tag="unSplashTag"
@@ -135,8 +137,6 @@ app.mount('#app')
 | 名称 | 类型 | 默认值 | 说明 |
 | ---- | ---- | ---- | ----------- |
 | elementId | String | `'vue-fucking-gallery'` | 相册元素的ID |
-| animationSolution | String | `'byCanvas'` | 动画绘制方式，在以下选项中选择<br/>`'byCss3'`: 使用Css3绘制动画<br/>`'byCanvas'`: 使用Canvas绘制动画 |
-| showCanvas | Boolean | `true` | 是否显示本组件 |
 | gridMaxWidth | Integer | `200` | 每个动画单元的最大宽度，基于性能考虑，不要小于`48` |
 | gridMaxHeight | Integer | `200` | 每个动画单元的最大高度，基于性能考虑，不要小于`48` |
 | gridDividerWidth | Integer | `1` | 动画单元之间的分割线，可以设置为`0` |
@@ -154,22 +154,26 @@ app.mount('#app')
 | useUnSplash | Boolean | `false` | 是否使用 UnSplash 服务，即使设置为`false`，如果`imageList`为空，依然会按`true`处理 |
 | unSplashTag | String | `'japan'` | UnSplash 的图片标签，不同的标签会返回符合不同标签的随机图片 |
 | unSplashAccessKey | String | `''` | **(v2.0 新增)** 你的 Unsplash Access Key。请前往 [Unsplash Developers](https://unsplash.com/developers) 申请。如果不填或请求超限，组件将自动降级使用免费的占位图服务以保证页面正常运转。 |
+| assumeOpaqueTextures | Boolean | `false` | **(v3.0 新增)** 假设图片纹理完全不透明，启用此选项可跳过混合状态管理以提升性能（需确保图片无透明区域） |
 | initLoadFinishCallback | Function | `null` | 初始化读取第一张图片完成后的回调 |
 | photoLoadSuccessCallback | Function | `null` | 读取图片完成后的回调，包括第一次读取图片完成也会回调 |
 | animateBeginCallback | Function | `null` | 动画开始的回调 |
-| animateEndCallback | Function | `null` | 动画结束的回调 |
+| animateEndCallback | Function | `null` | 动画结束的回调，携带参数 `stats` 性能统计对象，包含：`frames`（总帧数）、`bufferUploads`（缓冲上传次数）、`textureUploads`（纹理上传次数）、`sharedStaticHits`（静态缓存命中）、`singlePassHits`（单帧混合命中）、`animatedInstancesPeak`（峰值动画单元数）等 |
+| canvasAnimateEasing | String | `'SinusoidalInOut'` | 动画时间曲线，包含 `'Linear'` `'QuadraticIn'` `'QuadraticOut'` `'QuadraticInOut'` `'CubicIn'` `'CubicOut'` `'CubicInOut'` `'QuarticIn'` `'QuarticOut'` `'QuarticInOut'` `'QuinticIn'` `'QuinticOut'` `'QuinticInOut'` `'SinusoidalIn'` `'SinusoidalOut'` `'SinusoidalInOut'` `'ExponentialIn'` `'ExponentialOut'` `'ExponentialInOut'` `'CircularIn'` `'CircularOut'` `'CircularInOut'` `'ElasticIn'` `'ElasticOut'` `'ElasticInOut'` `'BackIn'` `'BackOut'` `'BackInOut'` `'BounceIn'` `'BounceOut'` `'BounceInOut'`参数值，另外有如下两个随机选项<br/>`'sameRandom'`: 所有的动画单元随机选择使用前面曲线中的某一个，但是均为同一个<br/>`'eachRandom'`: 每个动画单元单独随机选择使用前面曲线中的某一个 |
 
-### animationSolution 使用 byCss3 时有效配置
+## 性能优化特性 (v3.0+)
 
-| 名称 | 类型 | 默认值 | 说明 |
-| ---- | ---- | ---- | ----------- |
-| css3AnimateEasing | String | `'ease'` | Css3的`animation-timing-function`参数值，支持`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'` `'cubic-bezier(*,*,*,*)'`，另外有如下两个随机选项<br/>`'sameRandom'`: 所有的动画单元随机选择使用`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'`中的一个<br/>`'allRandom'`: 每个动画单元单独随机选择使用`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'`中的一个 |
+该版本引入了多项性能优化，特别针对低端设备和 Android 平台进行了优化：
 
-### animationSolution 使用 byCanvas 时有效配置
-
-| 名称 | 类型 | 默认值 | 说明 |
-| ---- | ---- | ---- | ----------- |
-| canvasAnimateEasing | String | `'SinusoidalInOut'` | ZRender 的动画时间曲线，包含 `'Linear'` `'QuadraticIn'` `'QuadraticOut'` `'QuadraticInOut'` `'CubicIn'` `'CubicOut'` `'CubicInOut'` `'QuarticIn'` `'QuarticOut'` `'QuarticInOut'` `'QuinticIn'` `'QuinticOut'` `'QuinticInOut'` `'SinusoidalIn'` `'SinusoidalOut'` `'SinusoidalInOut'` `'ExponentialIn'` `'ExponentialOut'` `'ExponentialInOut'` `'CircularIn'` `'CircularOut'` `'CircularInOut'` `'ElasticIn'` `'ElasticOut'` `'ElasticInOut'` `'BackIn'` `'BackOut'` `'BackInOut'` `'BounceIn'` `'BounceOut'` `'BounceInOut'`参数值<br/>具体效果参见 [ZRender官方示例](https://ecomfe.github.io/zrender-doc/public/examples/animation.html)，另外与上方`css3AnimateEasing`一样，包含`'sameRandom'`和`'allRandom'`选项 |
+| 特性 | 说明 | 启用条件 |
+| ---- | ---- | ----------- |
+| **FLOAT32 数据布局** | 采用 24 字节对齐的 FLOAT32 属性格式，规避 Mali/Adreno GPU 的 HALF_FLOAT 慢路径 | 默认启用 |
+| **静态底图缓存** | 使用 FrameBuffer Object (FBO) 缓存不变的静态渲染层，避免动画期间重复绘制 | 自动检测 |
+| **Single-Pass 混合** | 当新旧纹理尺寸相同且无空间动画时，在单个 pass 中完成混合渲染 | 自动检测 |
+| **Old Pass Bypass** | 当所有动画单元都透明且无空间移动时，跳过旧图层渲染 | 自动检测 |
+| **Dirty Rectangle** | 只渲染受动画影响的区域，减少像素填充工作量 | 自动启用 |
+| **不透明假设** | 设置 `assumeOpaqueTextures: true` 后，禁用混合状态管理以进一步提升性能 | 手动启用 |
+| **Safari 初始化修复** | 自动处理 Safari WebGL 2.0 上下文初始化的时序问题，确保首屏渲染正确 | 默认启用 |
 
 ## 注意
 

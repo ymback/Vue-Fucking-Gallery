@@ -5,30 +5,30 @@
 [![npm](https://img.shields.io/npm/v/vue-fucking-gallery.svg)](https://www.npmjs.com/package/vue-fucking-gallery)
 [![npm](https://img.shields.io/npm/l/vue-fucking-gallery.svg)](https://www.npmjs.com/package/vue-fucking-gallery)
 
-# Vue Fucking Gallery (v2.x)
+# Vue Fucking Gallery (v3.x)
 
-A gallery component based on Vue 3, draw canvas with [ZRender](https://github.com/ecomfe/zrender)  
+A gallery component based on Vue 3, rendering with WebGL 2.0  
 中文文档, 看[这里](README.md)
 
-> ⚠️ **Notice:** v2.x version has fully embraced the **Vue 3 + Vite** modern frontend architecture. If your project is still using Vue 2, please install and use the v1.x version.
+> ⚠️ **Notice:** v3.x version has fully embraced the **Vue 3 + Vite** modern frontend architecture with WebGL 2.0 rendering. If your project is still using Vue 2, please install and use the v1.x version.
 
 ## Intro
 
-* This is a component you'll always say 'fuck', you'll say 'fuck' when config, and say 'fuck' when refresh your browser
-* You can config nothing, just use and run
-* Support drawing animation with css3 or canvas, all by your config
-* Support setting animation run time and delay time
-* Support setting the running direction of every grid item when animate, support one by one or multi row/column run
-* Support all animation-timing-function when using css3, all easing functions of ZRender when using canvas
-* Some configurations support random mode
-* Support setting image address list, or use [Unsplash](https://unsplash.com/) random image
-* Support setting tag of [Unsplash](https://unsplash.com/) random image
-* Load next image when animation finished
-* Support opacity setting
-* Support setting divider width and color
-* Special 'Snake' mode
-* **[v2.0 Upgrade]** Integrated Unsplash official API. Dynamically calculates container ratio and combines with `devicePixelRatio` to fetch Retina-ready, perfectly fitted high-res images.
-* **[v2.0 Upgrade]** Enterprise-level fallback: When the Unsplash API key is missing or request limit is exceeded, it automatically gracefully downgrades to `LoremFlickr` placeholders. No more blank screens!
+* This is a component you'll always say 'fuck', you'll say 'fuck' when configuring, and say 'fuck' when refreshing the browser
+* Zero-configuration setup - just use it directly
+* High-performance WebGL 2.0-based rendering with optimization for Android devices
+* Support configurable animation duration and wait time
+* Support animation direction control for grid items (row-by-row, column-by-column, or snake mode)
+* Extensive easing function library (30+ timing functions)
+* Most configurations support randomization
+* Support custom image arrays or auto-fetch from [Unsplash](https://unsplash.com/)
+* Unsplash tag filtering for thematic image collections
+* Intelligent lazy loading - images load only after animation completes
+* Configurable opacity effects and item animations
+* Customizable grid divider width and color
+* Unique 'Snake' mode for creative transitions
+* Integrated Unsplash official API with dynamic container ratio calculation and `devicePixelRatio`-aware Retina image fetching
+* Enterprise-grade fallback mechanism: Auto-degrades to `LoremFlickr` placeholder service when API key is missing or quota exceeded - guaranteed no blank pages
 
 ## Example
 
@@ -39,9 +39,16 @@ A gallery component based on Vue 3, draw canvas with [ZRender](https://github.co
 [![](example/3.jpg)](example/3.jpg "Example 3")
 [![](example/4.jpg)](example/4.jpg "Example 4")
 
-## Browser support
+## Browser Support
 
-All modern browsers, Internet Explorer 11, not tested on other browsers.
+All modern browsers with WebGL 2.0 support.
+
+**Performance Features:**
+- WebGL 2.0 + dual-buffer rendering pipeline optimized for Android devices
+- Dynamic attributes use FLOAT32 data type to avoid Mali/Adreno driver slow paths
+- Static Base Cache (FBO) mechanism reduces redundant draws during animation
+- Automatic single-pass blend rendering and dirty rectangle optimization
+- Safari WebGL 2.0 context initialization compatibility fix for correct first-frame rendering
 
 ## Install
 
@@ -62,7 +69,6 @@ const app = createApp(App)
 app.use(VueFuckingGallery)
 app.mount('#app')
 ```
-*(Note: v2.x has CSS injected into JS by default. You can use it directly as imported above without importing the stylesheet separately.)*
 
 ## Use
 
@@ -89,8 +95,6 @@ app.mount('#app')
 <template>
     <vue-fucking-gallery 
         :element-id="id" 
-        :show-canvas="showCanvas"
-        :animation-solution="animationSolution"
         :grid-max-width="gridMaxWidth"
         :grid-max-height="gridMaxHeight"
         :grid-divider-width="gridDividerWidth"
@@ -105,11 +109,11 @@ app.mount('#app')
         :animate-show-order="animateShowOrder"
         :animate-effect="animateEffect"
         :canvas-animate-easing="canvasAnimateEasing"
-        :css3-animate-easing="css3AnimateEasing"
         :image-list="imageList"
         :use-un-splash="useUnSplash"
         :un-splash-tag="unSplashTag"
         :un-splash-access-key="unSplashAccessKey"
+        :assume-opaque-textures="assumeOpaqueTextures"
         :init-load-finish-callback="initLoadFinishCallback"
         :photo-load-success-callback="photoLoadSuccessCallback"
         :animate-begin-callback="animateBeginCallback"
@@ -127,54 +131,57 @@ app.mount('#app')
 </style>
 ```
 
-## Configuration(Props)
+## Configuration (Props)
 
-All configurations are responsive, and unless it's necessary to resize, animation will not stop and draw next image
+All configurations are reactive. Unless layout reset is required, animation will not stop and will smoothly transition to the next image.
 
-### Base
+### Base Configuration
 
-| Name | Type | Default | Intro |
+| Name | Type | Default | Description |
 | ---- | ---- | ---- | ----------- |
-| elementId | String | `'vue-fucking-gallery'` | Component element id |
-| animationSolution | String | `'byCanvas'` | The way to draw, use option below<br/>`'byCss3'`: use css3 to draw<br/>`'byCanvas'`: use canvas to draw |
-| showCanvas | Boolean | `true` | Show or not |
-| gridMaxWidth | Integer | `200` | The max width of item in page grid, as for performance, this value should not be less than `48` |
-| gridMaxHeight | Integer | `200` | The max height of item in page grid, as for performance, this value should not be less than `48`  |
-| gridDividerWidth | Integer | `1` | Grid divider width, can be set to `0` |
-| gridDividerColor | String | `'#fff'` | Grid divider color, like `'#fff'` or `'#ffffff'` |
-| useAnimate | Boolean | `true` | Using animation or not, if set `false`, next image will show after delay time |
-| slideWaitTime | Integer | `5000` | Wait time between last animation finished and next animation start, millisecond, no less than `1000` |
-| animateSpeed | Integer | `150` | Animation speed, calculate animation run time using this and `animateSpeedDelay`, no less than `100` |
-| animateSpeedDelay | Integer | `10` | A factor to calc Animation speed, no less than `5` |
-| animateItemDirection | String | `'left'` | Every item's animate direction when move, use option below<br/>`'left'`: from left to right<br/>`'top'`: from top to bottom<br/>`'right'`:from right to left<br/>`'bottom'`: from bottom to top<br/>`'random'`: all random, if use this, `animateShowOrder` will force set to `'random'`<br/>`'none'`: no moving animation，and `animateEffect` will force set to `'opacity'`<br/>`'snake'`: 'Snake' Mode, if set to this, the first item to show animation will force set to left top 0, `animateShowOrder` force set to `'singleItem'` |
-| animateRowDirection | String | `'left'` | The direction in every row, use option below<br/>`'left'`: every item in row show from left 0 to right 0<br/>`'right'`: every item in row show from right 0 to left 0<br/>`'random'`: random choose `'left'` or `'right'` |
-| animateColumnDirection | String | `'top'` | The direction in every column, use option below<br/>`'top'`: every item in column show from top 0 to bottom 0<br/>`'bottom'`: every item in column show from bottom 0 to top 0<br/>`'random'`: random choose`'top'` or `'bottom'` |
-| animateShowOrder | String | `'singleItem'` | Show all line or single item at the same time, the time between two item's animation depends on `animateSpeed` and `animateSpeedDelay`, use option below<br/>`'singleItem'`: every item show after last item show<br/>`'multiLine'`: every item in same row or column show at the same time, use the direction of `animateItemDirection` as start position<br/>`'random'`: random set every item's show time |
-| animateEffect | String | `'opacity'` | Effect of item, use the options below<br/>`'opacity'`: from `0` to `1`<br/>`'none'`: opacity always `1`<br/>`'sameRandom'`: all item will use same option, random choose one in `'opacity'` and `'none'`<br/>`'allRandom'`: each item use their own config in random |
-| imageList | Array | `[]` | The image list, empty will use unsplash |
-| useUnSplash | Boolean | `false` | Use unsplash or not, notice that even set to `false`, if `imageList` is empty, this will force set to `true` |
-| unSplashTag | String | `'japan'` | The tag of unsplash, different tags will return different images which fit this tag |
-| unSplashAccessKey | String | `''` | **(v2.0 New)** Your Unsplash Access Key. Get it at [Unsplash Developers](https://unsplash.com/developers). If empty or request limit exceeded, it will automatically downgrade to use free placeholder image services. |
-| initLoadFinishCallback | Function | `null` | Callback after first image loaded and show |
-| photoLoadSuccessCallback | Function | `null` | Callback after image loaded, include the first image in init |
-| animateBeginCallback | Function | `null` | Callback when animation Start |
-| animateEndCallback | Function | `null` | Callback when animation Finished |
+| elementId | String | `'vue-fucking-gallery'` | Component element ID |
+| gridMaxWidth | Integer | `200` | Maximum width of grid items; for performance, should not be less than `48` |
+| gridMaxHeight | Integer | `200` | Maximum height of grid items; for performance, should not be less than `48`  |
+| gridDividerWidth | Integer | `1` | Grid divider line width, can be set to `0` to hide |
+| gridDividerColor | String | `'#fff'` | Grid divider color, accepts 3-digit or 6-digit hex values like `'#fff'` or `'#ffffff'` |
+| useAnimate | Boolean | `true` | Enable animation; if `false`, next image displays after wait time |
+| slideWaitTime | Integer | `5000` | Wait time between animation completion and next animation start (milliseconds), minimum `1000` |
+| animateSpeed | Integer | `150` | Animation speed; combined with `animateSpeedDelay` to determine animation duration (milliseconds), minimum `100` |
+| animateSpeedDelay | Integer | `10` | Animation speed multiplier; combined with `animateSpeed` to calculate duration, minimum `5` |
+| animateItemDirection | String | `'left'` | Direction of grid item animation<br/>`'left'`: left to right<br/>`'top'`: top to bottom<br/>`'right'`: right to left<br/>`'bottom'`: bottom to top<br/>`'random'`: fully random (forces `animateShowOrder` to `'random'`)<br/>`'none'`: no movement, opacity only (forces `animateEffect` to `'opacity'`)<br/>`'snake'`: snake pattern from top-left counter-clockwise (forces `animateShowOrder` to `'singleItem'`) |
+| animateRowDirection | String | `'left'` | Row animation direction<br/>`'left'`: items show left to right within each row<br/>`'right'`: items show right to left within each row<br/>`'random'`: randomly choose `'left'` or `'right'` per row |
+| animateColumnDirection | String | `'top'` | Column animation direction<br/>`'top'`: items show top to bottom within each column<br/>`'bottom'`: items show bottom to top within each column<br/>`'random'`: randomly choose `'top'` or `'bottom'` per column |
+| animateShowOrder | String | `'singleItem'` | Timing stagger between item animations (interval determined by `animateSpeed` + `animateSpeedDelay`)<br/>`'singleItem'`: each item animates after the previous one completes<br/>`'multiLine'`: all items in same row/column animate simultaneously, following `animateItemDirection`<br/>`'random'`: random animation start time per item |
+| animateEffect | String | `'opacity'` | Grid item animation effect<br/>`'opacity'`: fade from transparent to opaque<br/>`'none'`: no effect, always opaque<br/>`'sameRandom'`: all items randomly use `'opacity'` or `'none'` (same choice)<br/>`'allRandom'`: each item independently randomizes its effect |
+| imageList | Array | `[]` | Image URL array; if empty, Unsplash service is used |
+| useUnSplash | Boolean | `false` | Enable Unsplash service; even if `false`, empty `imageList` forces this to `true` |
+| unSplashTag | String | `'japan'` | Unsplash image tag filter; different tags return thematically matched random images |
+| unSplashAccessKey | String | `''` | **(v2.0+)** Your Unsplash API Access Key from [Unsplash Developers](https://unsplash.com/developers). If missing or quota exceeded, auto-degrades to free placeholder service. |
+| assumeOpaqueTextures | Boolean | `false` | **(v3.0+)** Assume all textures are fully opaque; enables blending state optimization for better performance (only use when confirmed textures have no transparent regions) |
+| initLoadFinishCallback | Function | `null` | Callback triggered after first image loads and displays |
+| photoLoadSuccessCallback | Function | `null` | Callback triggered after each image loads (including initial image) |
+| animateBeginCallback | Function | `null` | Callback triggered when animation starts |
+| animateEndCallback | Function | `null` | Callback triggered when animation completes, receives `stats` performance object with: `frames` (total frames), `bufferUploads` (buffer upload count), `textureUploads` (texture upload count), `sharedStaticHits` (static cache hits), `singlePassHits` (single-pass blend hits), `animatedInstancesPeak` (peak animated items), etc. |
+| canvasAnimateEasing | String | `'SinusoidalInOut'` | WebGL animation easing curve. Options include: `'Linear'` `'QuadraticIn'` `'QuadraticOut'` `'QuadraticInOut'` `'CubicIn'` `'CubicOut'` `'CubicInOut'` `'QuarticIn'` `'QuarticOut'` `'QuarticInOut'` `'QuinticIn'` `'QuinticOut'` `'QuinticInOut'` `'SinusoidalIn'` `'SinusoidalOut'` `'SinusoidalInOut'` `'ExponentialIn'` `'ExponentialOut'` `'ExponentialInOut'` `'CircularIn'` `'CircularOut'` `'CircularInOut'` `'ElasticIn'` `'ElasticOut'` `'ElasticInOut'` `'BackIn'` `'BackOut'` `'BackInOut'` `'BounceIn'` `'BounceOut'` `'BounceInOut'`. Two randomization options:<br/>`'sameRandom'`: all items use the same randomly selected curve<br/>`'eachRandom'`: each item independently randomizes its curve |
 
-### Valid configuration when animationSolution set to `'byCss3'`
+## Performance Optimization Features (v3.0+)
 
-| Name | Type | Default | Intro |
-| ---- | ---- | ---- | ----------- |
-| css3AnimateEasing | String | `'ease'` | The `animation-timing-function` value of css3, support `'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'` `'cubic-bezier(*,*,*,*)'`, and other two random config below<br/>`'sameRandom'`: all item in grid will use same config, choose one in `'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'`<br/>`'allRandom'`: each item in grid will use their own config, choose one in`'linear'` `'ease'` `'ease-in'` `'ease-out'` `'ease-in-out'` |
+This version includes extensive performance optimizations, particularly targeting low-end devices and Android platforms:
 
-### Valid configuration when animationSolution set to `'byCanvas'`
+| Feature | Description | Enabled By |
+| ---- | ---- | ----------- |
+| **FLOAT32 Data Layout** | 24-byte-aligned FLOAT32 attribute format avoiding Mali/Adreno GPU HALF_FLOAT slow paths | Default |
+| **Static Base Cache** | Framebuffer Object (FBO) caches the static render layer, eliminating redundant draws during animation | Auto-detected |
+| **Single-Pass Blending** | When new and old textures are same size with no spatial animation, both blend in single pass | Auto-detected |
+| **Old Pass Bypass** | When all animation items are fully transparent with no spatial movement, skips old layer rendering | Auto-detected |
+| **Dirty Rectangle** | Only renders animation-affected regions, reducing pixel fill workload | Auto-enabled |
+| **Opaque Assumption** | Setting `assumeOpaqueTextures: true` disables blending state management for further performance gain | Manual enable |
+| **Safari Context Fix** | Automatically handles WebGL 2.0 context initialization timing on Safari for correct first-frame rendering | Default |
 
-| Name | Type | Default | Intro |
-| ---- | ---- | ---- | ----------- |
-| canvasAnimateEasing | String | `'SinusoidalInOut'` | The easing functions of ZRender, include `'Linear'` `'QuadraticIn'` `'QuadraticOut'` `'QuadraticInOut'` `'CubicIn'` `'CubicOut'` `'CubicInOut'` `'QuarticIn'` `'QuarticOut'` `'QuarticInOut'` `'QuinticIn'` `'QuinticOut'` `'QuinticInOut'` `'SinusoidalIn'` `'SinusoidalOut'` `'SinusoidalInOut'` `'ExponentialIn'` `'ExponentialOut'` `'ExponentialInOut'` `'CircularIn'` `'CircularOut'` `'CircularInOut'` `'ElasticIn'` `'ElasticOut'` `'ElasticInOut'` `'BackIn'` `'BackOut'` `'BackInOut'` `'BounceIn'` `'BounceOut'` `'BounceInOut'`, see [ZRender official example of easing functions](https://ecomfe.github.io/zrender-doc/public/examples/animation.html), like above `css3AnimateEasing`, include `'sameRandom'` and `'allRandom'` to set random |
 
-## Notice
+## Important Notes
 
-* When change config above, it will use new config to draw immediately, some of configs will force stop animation and draw next image, then load image normally, with call of `animateEndCallback`
-* If use `imageList`, but all of the image in list load failed, this component will stop load until you set new config
-* If the image showing now is equal to the next image loaded, it will not use the next image, but still load the one after next
-* When the browser window triggers a `resize` event, the system will automatically discard the background image with mismatched proportions and dynamically fetch a new, perfectly matched image based on the new window size for a seamless replacement.
+* Configuration changes apply reactively and immediately. Some configs force animation termination, trigger next image draw, and invoke `animateEndCallback`.
+* If `imageList` is provided but all images fail to load, the component stops loading until you update configuration.
+* Duplicate consecutive images are automatically skipped; the component continues to the next unique image.
+* On browser window `resize` events, the system automatically discards mismatched proportions images and fetches a new perfectly-fit image based on the updated window dimensions for seamless replacement.
