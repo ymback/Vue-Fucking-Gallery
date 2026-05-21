@@ -22,7 +22,7 @@ For english user, read [here](README-EN.md)
 * 大部分参数支持随机配置
 * 支持配置图片地址数组，或使用[Unsplash](https://unsplash.com/)随机图片
 * [Unsplash](https://unsplash.com/)随机图片支持标签设置
-* 每张图片会在动画完成之后开始加载
+* 首张图片绘制后会立即预加载下一张，动画结束后无缝切换展示
 * 支持图片动画期间透明度设置
 * 支持分割线及其颜色配置
 * 独特的贪吃蛇模式
@@ -142,14 +142,14 @@ app.mount('#app')
 | gridDividerWidth | Integer | `1` | 动画单元之间的分割线，可以设置为`0` |
 | gridDividerColor | String | `'#fff'` | 分割线颜色，支持3位或6位Hex色值，例如`'#fff'`或`'#ffffff'` |
 | useAnimate | Boolean | `true` | 是否使用动画，不使用动画将直接在等待时间完成后绘制下一张图片 |
-| slideWaitTime | Integer | `5000` | 每次动画完毕到下一次动画开始前的等待时间，单位为毫秒，不能小于`1000` |
-| animateSpeed | Integer | `150` | 动画速度，与`animateSpeedDelay`值共用以确定动画运行时间，单位为毫秒，不能小于`100` |
-| animateSpeedDelay | Integer | `10` | 动画运行速度积，与`animateSpeed`值共用以确定动画运行时间，不能小于`5` |
+| slideWaitTime | Integer | `5000` | 每次动画完毕到下一次动画开始前的等待时间，单位为毫秒；小于`1000`时会自动按`1000`处理 |
+| animateSpeed | Integer | `150` | 动画速度，与`animateSpeedDelay`值共用以确定动画运行时间，单位为毫秒；小于`100`时会自动按`100`处理 |
+| animateSpeedDelay | Integer | `10` | 动画运行速度积，与`animateSpeed`值共用以确定动画运行时间；小于`5`时会自动按`5`处理 |
 | animateItemDirection | String | `'left'` | 每个动画单元的行进方向，在以下选项中选择<br/>`'left'`: 从左到右<br/>`'top'`: 从上到下<br/>`'right'`:从右到左<br/>`'bottom'`: 从下到上<br/>`'random'`: 全部随机，使用该值，则`animateShowOrder`会强制使用`'random'`<br/>`'none'`: 不使用移动效果，使用该值，则`animateEffect`会强制使用`'opacity'`<br/>`'snake'`: 贪吃蛇模式，使用该值，则起始位置强制为左上第一个，逆时针绕圈，`animateShowOrder`会强制使用`'singleItem'` |
 | animateRowDirection | String | `'left'` | 每一行的展示方向，在以下选项中选择<br/>`'left'`: 每行中动画单元从左到右展示<br/>`'right'`: 每行中动画单元从右到左展示<br/>`'random'`: 随机选择`'left'`或者`'right'` |
 | animateColumnDirection | String | `'top'` | 每一列的展示方向，在以下选项中选择<br/>`'top'`: 每列中动画单元从上到下展示<br/>`'bottom'`: 每列中动画单元从下到上展示<br/>`'random'`: 随机选择`'top'`或者`'bottom'` |
 | animateShowOrder | String | `'singleItem'` | 动画单元的展示间隔,具体时间间隔由`animateSpeed`和`animateSpeedDelay`共同决定，在以下选项中选择<br/>`'singleItem'`: 每个动画单元会在上一个动画单元出现后再出现<br/>`'multiLine'`: 每一行/列的动画单元会一起出现，并按照`animateItemDirection`指定的方向开始整行/列出现<br/>`'random'`: 随机设置每个动画单元的动画开始时间 |
-| animateEffect | String | `'opacity'` | 动画单元的效果，在以下选项中选择<br/>`'opacity'`: 从完全透明到完全不透明<br/>`'none'`: 不使用效果<br/>`'sameRandom'`: 所有动画单元随机选择`'opacity'`和`'none'`中的一个<br/>`'allRandom'`: 每个动画单元单独随机选择 |
+| animateEffect | String | `'opacity'` | 动画单元的效果，在以下选项中选择<br/>`'opacity'`: 从完全透明到完全不透明<br/>`'none'`: 不使用效果<br/>`'sameRandom'`: 所有动画单元随机选择`'opacity'`和`'none'`中的一个<br/>`'eachRandom'`: 每个动画单元单独随机选择 |
 | imageList | Array | `[]` | 设置的图片列表，为空则自动使用 UnSplash 服务 |
 | useUnSplash | Boolean | `false` | 是否使用 UnSplash 服务，即使设置为`false`，如果`imageList`为空，依然会按`true`处理 |
 | unSplashTag | String | `'japan'` | UnSplash 的图片标签，不同的标签会返回符合不同标签的随机图片 |

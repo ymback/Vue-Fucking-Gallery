@@ -58,11 +58,15 @@ export class AnimationEngine {
         const gridCount = layout.gridItemCount;
         const viewW = layout.excludeDividerElementWidth;
         const viewH = layout.excludeDividerElementHeight;
+        const bmpW = bitmap.width;
+        const bmpH = bitmap.height;
+        if (viewW <= 0 || viewH <= 0 || bmpW <= 0 || bmpH <= 0) return;
 
         // object-fit: cover 等价公式：统一缩放并居中裁切，避免任何 fitXY 拉伸
-        const coverScale = Math.max(viewW / bitmap.width, viewH / bitmap.height);
-        const scaledW = bitmap.width * coverScale;
-        const scaledH = bitmap.height * coverScale;
+        const coverScale = Math.max(viewW / bmpW, viewH / bmpH);
+        if (!Number.isFinite(coverScale) || coverScale <= 0) return;
+        const scaledW = bmpW * coverScale;
+        const scaledH = bmpH * coverScale;
         const cropScaledX = (scaledW - viewW) * 0.5;
         const cropScaledY = (scaledH - viewH) * 0.5;
 
@@ -122,6 +126,14 @@ export class AnimationEngine {
                     buf[offset + 5] = ty;
                     buf[offset + 6] = w;
                     buf[offset + 7] = h;
+
+                    // Initialize dynamic slots to a safe static state in case callers reuse buffers.
+                    buf[offset + 8] = tx;
+                    buf[offset + 9] = ty;
+                    buf[offset + 10] = 1.0;
+                    buf[offset + 11] = 0.0;
+                    buf[offset + 12] = 0.0;
+                    buf[offset + 13] = 0.0;
                 }
 
                 // 8~13 预留给 Vue 组件填写动画起飞点和时序

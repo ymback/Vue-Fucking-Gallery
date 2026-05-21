@@ -132,7 +132,6 @@ export class WebGLRenderer {
         this.programAnimated = this.createProgram(VS_SOURCE_ANIMATED, FS_SOURCE_NORMAL);
         this.programSinglePass = this.createProgram(VS_SOURCE_ANIMATED, FS_SOURCE_SINGLE_PASS);
         this.programBlit = this.createProgram(VS_SOURCE_BLIT, FS_SOURCE_BLIT);
-        this.program = this.programAnimated;
         this.currentProgram = null;
         this.useProgramIfNeeded(this.programAnimated);
 
@@ -151,8 +150,6 @@ export class WebGLRenderer {
         this.uLutLocSingle = gl.getUniformLocation(this.programSinglePass, "u_lut");
         this.uLutHeightLocSingle = gl.getUniformLocation(this.programSinglePass, "u_lutHeight");
 
-        this.uImageLocBlit = gl.getUniformLocation(this.programBlit, "u_image");
-
         this.useProgramIfNeeded(this.programStatic);
         gl.uniform1i(gl.getUniformLocation(this.programStatic, "u_image"), 0);
 
@@ -166,7 +163,7 @@ export class WebGLRenderer {
         gl.uniform1i(this.uLutLocSingle, 1);
 
         this.useProgramIfNeeded(this.programBlit);
-        gl.uniform1i(this.uImageLocBlit, 0);
+        gl.uniform1i(gl.getUniformLocation(this.programBlit, "u_image"), 0);
 
         this.useProgramIfNeeded(this.programAnimated);
         this.cachedUTime = NaN;
@@ -636,7 +633,7 @@ export class WebGLRenderer {
             this[sizeKey][0] === width &&
             this[sizeKey][1] === height
         ) {
-            this[sampleKey] = this[storageKey];
+            this[sampleKey] = this[storageKey] || this[sizeKey];
             return;
         }
 
@@ -698,20 +695,25 @@ export class WebGLRenderer {
 
     resize(w, h, clearColor) {
         const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
-        const dw = w * dpr;
-        const dh = h * dpr;
+        const safeW = Math.max(1, Math.floor(w));
+        const safeH = Math.max(1, Math.floor(h));
+        this.canvas.style.width = `${safeW}px`;
+        this.canvas.style.height = `${safeH}px`;
+
+        const logicalW = safeW;
+        const logicalH = safeH;
+        const dw = Math.max(1, Math.round(logicalW * dpr));
+        const dh = Math.max(1, Math.round(logicalH * dpr));
 
         this.canvas.width = dw;
         this.canvas.height = dh;
-        this.canvas.style.width = `${w}px`;
-        this.canvas.style.height = `${h}px`;
 
         const gl = this.gl;
         gl.viewport(0, 0, dw, dh);
-        this.logicalWidth = w;
-        this.logicalHeight = h;
-        const invW = w > 0 ? 1 / w : 0;
-        const invH = h > 0 ? 1 / h : 0;
+        this.logicalWidth = logicalW;
+        this.logicalHeight = logicalH;
+        const invW = 1 / logicalW;
+        const invH = 1 / logicalH;
         this.useProgramIfNeeded(this.programStatic);
         this.setUniform2fCached('cachedUResX', 'cachedUResY', this.uInvResLocStatic, invW, invH);
         this.useProgramIfNeeded(this.programAnimated);
@@ -923,6 +925,10 @@ export class WebGLRenderer {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
+        // Force program/VAO cache refresh after offscreen pass to avoid stale GL state.
+        this.currentProgram = null;
+        this.currentBoundVAO = null;
+
         this.staticBaseCacheDirty = false;
         this.staticBaseCacheValid = true;
     }
@@ -1118,6 +1124,9 @@ export class WebGLRenderer {
             if (!useFrameScopedScissor && scissorValid) this.setScissorRectValues(scissorX, scissorY, scissorW, scissorH);
             this.setBlendEnabled(true);
             this.useProgramIfNeeded(this.programAnimated);
+            const invW = this.logicalWidth > 0 ? 1 / this.logicalWidth : 0;
+            const invH = this.logicalHeight > 0 ? 1 / this.logicalHeight : 0;
+            this.setUniform2fCached('cachedUResX', 'cachedUResY', this.uInvResLocAnimated, invW, invH);
             if (this.dualInstanceMode && this.splitAnimatedMode) {
                 this.bindVaoIfNeeded(this.vaoSplitNew);
             } else {

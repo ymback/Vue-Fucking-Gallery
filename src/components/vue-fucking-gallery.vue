@@ -1,14 +1,12 @@
 <!-- vue-fucking-gallery.vue -->
 <template>
   <div ref="fuckingDiv" :id="elementId" class="vue-fucking-gallery-container">
-    <div class="vue-fucking-gallery-div">
-      <canvas ref="glCanvasRef"></canvas>
-    </div>
+    <canvas ref="glCanvasRef"></canvas>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { BitmapLoader, updateLoaderSizeCache } from './bitmap-loader.js';
 import { LayoutEngine } from './layout-engine.js';
 import { AnimationEngine, STRIDE_FLOATS } from './animation-engine.js';
@@ -44,6 +42,21 @@ const props = defineProps({
   animateEndCallback: Function
 });
 
+function getSafeAnimateSpeed() {
+  const v = Number(props.animateSpeed);
+  return Number.isFinite(v) ? Math.max(100, v) : 100;
+}
+
+function getSafeAnimateSpeedDelay() {
+  const v = Number(props.animateSpeedDelay);
+  return Number.isFinite(v) ? Math.max(5, v) : 5;
+}
+
+function getSafeSlideWaitTime() {
+  const v = Number(props.slideWaitTime);
+  return Number.isFinite(v) ? Math.max(1000, v) : 1000;
+}
+
 const fuckingDiv = ref(null);
 const glCanvasRef = ref(null);
 
@@ -62,6 +75,10 @@ let nextImageStartLoadTime = 0;
 let loadErrorTimes = 0;
 
 let rAnimateFrameId = null;
+let bootstrapRafId = null;
+let firstPaintStabilizeRafId = null;
+let resizeRecoveryRafId = null;
+let firstPaintStabilized = false;
 let animationLoopStartTime = null;
 let maxAnimDuration = 0;
 let delayActiveCursor = 0;
@@ -99,16 +116,9 @@ for (let i = 0; i < RAND_LUT_SIZE; i++) randomLUT[i] = Math.random();
 let randPtr = 0;
 function fastRandom() { return randomLUT[(randPtr++) & (RAND_LUT_SIZE - 1)]; }
 
-const itemConfigTemp = {
-  animateItemDirectionRunning: 'left',
-  animateEffect: 'opacity',
-  canvasAnimateEasing: 'Linear',
-  runTime: 0,
-  delayTime: 0
-};
-
 const DIRECTION_TO_CODE = { left: 0, top: 1, right: 2, bottom: 3 };
 const NO_MOTION_DIRECTION_CODE = 255;
+const CODE_TO_DIRECTION = ['left', 'top', 'right', 'bottom'];
 const animationPresetCache = new Map();
 const directionPresetCache = new Map();
 const delayPresetCache = new Map();
@@ -148,10 +158,13 @@ onMounted(() => {
   renderer.uploadLUT(animEngine.lutData, animEngine.LUT_RESOLUTION, animEngine.lutHeight);
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
-  initImageSource();
-  resizeElement();
-  loadImage();
   window.addEventListener('resize', handleResize);
+
+  // iOS Safari/QQ 首次进入时，容器尺寸可能会在前几帧才稳定。
+  // 等待尺寸就绪后再触发首轮加载，避免首帧渲染贴在左上角。
+  nextTick(() => {
+    startBootstrapLoad();
+  });
 });
 
 onUnmounted(() => {
@@ -159,21 +172,144 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   if (loader) loader.destroy();
   if (rAnimateFrameId !== null) cancelAnimationFrame(rAnimateFrameId);
+  if (bootstrapRafId !== null) cancelAnimationFrame(bootstrapRafId);
+  if (firstPaintStabilizeRafId !== null) cancelAnimationFrame(firstPaintStabilizeRafId);
+  if (resizeRecoveryRafId !== null) cancelAnimationFrame(resizeRecoveryRafId);
   if (currentImageBitmap) currentImageBitmap.close();
   if (nextImageBitmap) nextImageBitmap.close();
 });
 
+function startBootstrapLoad() {
+  if (bootstrapRafId !== null) cancelAnimationFrame(bootstrapRafId);
+
+  const tryStart = (retryCount = 0) => {
+    const el = fuckingDiv.value;
+    if (!el) return;
+
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    if (w > 0 && h > 0) {
+      bootstrapRafId = null;
+      initImageSource();
+      resizeElement();
+      loadImage();
+      return;
+    }
+
+    if (retryCount >= 60) {
+      bootstrapRafId = null;
+      return;
+    }
+    bootstrapRafId = requestAnimationFrame(() => tryStart(retryCount + 1));
+  };
+
+  bootstrapRafId = requestAnimationFrame(() => tryStart(0));
+}
+
+function scheduleFirstPaintStabilize() {
+  if (firstPaintStabilized) return;
+  firstPaintStabilized = true;
+
+  if (firstPaintStabilizeRafId !== null) cancelAnimationFrame(firstPaintStabilizeRafId);
+  firstPaintStabilizeRafId = requestAnimationFrame(() => {
+    firstPaintStabilizeRafId = requestAnimationFrame(() => {
+      firstPaintStabilizeRafId = null;
+      if (!currentImageBitmap || animationRunning) return;
+      resizeElement();
+    });
+  });
+}
+
 let windowResizeSetTimer = null;
+function refreshImageAfterResize() {
+  if (animationRunning) return;
+  if (slideWaitTimer !== null) clearTimeout(slideWaitTimer);
+  if (nextImageBitmap) { nextImageBitmap.close(); nextImageBitmap = null; }
+  isLoadingImage = false;
+  loadImage(true);
+}
+
+function scheduleResizeRecovery() {
+  if (resizeRecoveryRafId !== null) cancelAnimationFrame(resizeRecoveryRafId);
+
+  let lastW = -1;
+  let lastH = -1;
+  let stableFrames = 0;
+  let appliedW = -1;
+  let appliedH = -1;
+  let postApplyChecks = 0;
+
+  const tryRecover = (retryCount = 0) => {
+    const el = fuckingDiv.value;
+    if (!el) {
+      resizeRecoveryRafId = null;
+      return;
+    }
+
+    const w = Math.floor(el.offsetWidth);
+    const h = Math.floor(el.offsetHeight);
+    if (w <= 0 || h <= 0) {
+      stableFrames = 0;
+      if (retryCount >= 90) {
+        resizeRecoveryRafId = null;
+        return;
+      }
+      resizeRecoveryRafId = requestAnimationFrame(() => tryRecover(retryCount + 1));
+      return;
+    }
+
+    if (w === lastW && h === lastH) {
+      stableFrames++;
+    } else {
+      lastW = w;
+      lastH = h;
+      stableFrames = 0;
+    }
+
+    // 避免在 resize 中间态（例如半宽）过早收敛，要求连续多帧稳定后才应用。
+    if (stableFrames >= 5 && postApplyChecks === 0) {
+      const resized = resizeElement();
+      if (resized) {
+        appliedW = w;
+        appliedH = h;
+        postApplyChecks = 1;
+      }
+    }
+
+    if (postApplyChecks > 0) {
+      postApplyChecks++;
+      // 应用后再观察几帧，如果尺寸继续变化则重新进入稳定判定，避免锁死在半屏尺寸。
+      if (w !== appliedW || h !== appliedH) {
+        appliedW = -1;
+        appliedH = -1;
+        postApplyChecks = 0;
+        stableFrames = 0;
+      } else if (postApplyChecks >= 4) {
+        resizeRecoveryRafId = null;
+        refreshImageAfterResize();
+        return;
+      }
+    }
+
+    if (retryCount >= 120) {
+      const resized = resizeElement();
+      resizeRecoveryRafId = null;
+      if (resized) {
+        refreshImageAfterResize();
+      }
+      return;
+    }
+
+    resizeRecoveryRafId = requestAnimationFrame(() => tryRecover(retryCount + 1));
+  };
+
+  resizeRecoveryRafId = requestAnimationFrame(() => tryRecover(0));
+}
+
 const handleResize = () => {
   if (windowResizeSetTimer !== null) clearTimeout(windowResizeSetTimer);
   windowResizeSetTimer = setTimeout(() => {
-    resizeElement();
-    if (!animationRunning) {
-      if (slideWaitTimer !== null) clearTimeout(slideWaitTimer);
-      if (nextImageBitmap) { nextImageBitmap.close(); nextImageBitmap = null; }
-      isLoadingImage = false;
-      loadImage(true);
-    }
+    scheduleResizeRecovery();
     windowResizeSetTimer = null;
   }, 200);
 };
@@ -314,12 +450,14 @@ function isDeterministicAnimationConfig(baseConfig) {
 
 function buildAnimationPresetKey(baseConfig, count) {
   const fixedEffect = baseConfig.animateEffectCanUseArray[0] || 'opacity';
+  const animateSpeed = getSafeAnimateSpeed();
+  const animateSpeedDelay = getSafeAnimateSpeedDelay();
   return [
     count,
     layout.rowCount,
     layout.columnCount,
-    props.animateSpeed,
-    props.animateSpeedDelay,
+    animateSpeed,
+    animateSpeedDelay,
     baseConfig.animateItemDirection,
     baseConfig.animateShowOrder,
     baseConfig.animateRowDirection,
@@ -331,36 +469,61 @@ function buildAnimationPresetKey(baseConfig, count) {
 
 function resolveDirectionCode(itemDirection, index) {
   if (itemDirection === 'snake') {
-    let indexInRow = index % layout.rowCount;
-    let indexInColumn = Math.floor(index / layout.rowCount);
-    if (indexInRow >= indexInColumn && indexInRow <= (layout.rowCount - (indexInColumn + 1)) && indexInColumn <= (Math.floor(layout.columnCount / 2) - (layout.columnCount % 2 === 0 ? 1 : 0))) {
-      return DIRECTION_TO_CODE.left;
-    }
-    if (indexInRow >= (layout.columnCount - indexInColumn - 1) && indexInRow < (layout.rowCount - (layout.columnCount - indexInColumn)) && indexInColumn > (Math.floor(layout.columnCount / 2) - (layout.columnCount % 2 === 0 ? 1 : 0))) {
-      return DIRECTION_TO_CODE.right;
-    }
-    if (indexInColumn > indexInRow && indexInColumn < (layout.columnCount - (indexInRow + 1)) && indexInRow <= Math.ceil(layout.rowCount / 2)) {
-      return DIRECTION_TO_CODE.bottom;
-    }
-    return DIRECTION_TO_CODE.top;
+    return resolveSnakeDirectionCode(index);
   }
   return DIRECTION_TO_CODE[itemDirection] ?? NO_MOTION_DIRECTION_CODE;
 }
 
+function resolveSnakeDirectionCode(index) {
+  const x = index % layout.rowCount;
+  const y = Math.floor(index / layout.rowCount);
+
+  const layer = Math.min(
+    x,
+    y,
+    layout.rowCount - 1 - x,
+    layout.columnCount - 1 - y
+  );
+
+  const left = layer;
+  const right = layout.rowCount - 1 - layer;
+  const top = layer;
+  const bottom = layout.columnCount - 1 - layer;
+
+  if (y === top && x >= left && x <= right) return DIRECTION_TO_CODE.left;
+  if (y === bottom && x >= left && x <= right) return DIRECTION_TO_CODE.right;
+  if (x === left && y > top && y < bottom) return DIRECTION_TO_CODE.bottom;
+  return DIRECTION_TO_CODE.top;
+}
+
+function resolveSnakeOrderIndex(index) {
+  const order = layout.snakeSortMatrix[Math.floor(index / layout.rowCount)][index % layout.rowCount] || 1;
+  return order - 1;
+}
+
+function resolveSnakeDelayTime(index) {
+  const snakeOrder = resolveSnakeOrderIndex(index);
+  const animateSpeed = getSafeAnimateSpeed();
+  const animateSpeedDelay = getSafeAnimateSpeedDelay();
+  // snake 延迟按 animateSpeed + animateSpeedDelay 共同决定，避免总时长过长导致“看起来停住”。
+  const delayStep = Math.max(1, Math.round(animateSpeed * animateSpeedDelay * 0.2));
+  return snakeOrder * delayStep;
+}
+
 function resolveDeterministicDelay(baseConfig, index, delayDivisor) {
+  const animateSpeed = getSafeAnimateSpeed();
   const itemDirection = baseConfig.animateItemDirection;
   if (itemDirection === 'snake') {
-    let newIndex = layout.snakeSortMatrix[Math.floor(index / layout.rowCount)][index % layout.rowCount];
-    return Math.ceil(props.animateSpeed * newIndex / delayDivisor);
+    return resolveSnakeDelayTime(index);
   }
 
   if (baseConfig.animateShowOrder === 'multiLine') {
     switch (itemDirection) {
-      case 'left': return Math.ceil(props.animateSpeed * (index % layout.rowCount) / delayDivisor);
-      case 'right': return Math.ceil(props.animateSpeed * (layout.rowCount - index % layout.rowCount - 1) / delayDivisor);
-      case 'top': return Math.floor(props.animateSpeed * Math.floor(index / layout.rowCount) / delayDivisor);
-      case 'bottom': return Math.floor(props.animateSpeed * (layout.columnCount - Math.floor(index / layout.rowCount) - 1) / delayDivisor);
-      default: return Math.ceil(props.animateSpeed * index / delayDivisor);
+      case 'left': return Math.ceil(animateSpeed * (index % layout.rowCount) / delayDivisor);
+      case 'right': return Math.ceil(animateSpeed * (layout.rowCount - index % layout.rowCount - 1) / delayDivisor);
+      case 'top': return Math.floor(animateSpeed * Math.floor(index / layout.rowCount) / delayDivisor);
+      case 'bottom': return Math.floor(animateSpeed * (layout.columnCount - Math.floor(index / layout.rowCount) - 1) / delayDivisor);
+      default: return Math.ceil(animateSpeed * index / delayDivisor);
     }
   }
 
@@ -369,22 +532,22 @@ function resolveDeterministicDelay(baseConfig, index, delayDivisor) {
       if (baseConfig.animateColumnDirection === 'bottom') {
         let currentLineDesc = layout.columnCount - Math.floor(index / layout.rowCount);
         let newIndexDesc = (layout.rowCount - index % layout.rowCount - 1) + layout.rowCount * currentLineDesc;
-        return Math.ceil(props.animateSpeed * newIndexDesc / delayDivisor);
+        return Math.ceil(animateSpeed * newIndexDesc / delayDivisor);
       }
       let currentLine = Math.floor(index / layout.rowCount);
       let newIndex = (layout.rowCount - index % layout.rowCount - 1) + layout.rowCount * currentLine;
-      return Math.ceil(props.animateSpeed * newIndex / delayDivisor);
+      return Math.ceil(animateSpeed * newIndex / delayDivisor);
     }
 
     if (baseConfig.animateColumnDirection === 'bottom') {
       let currentLineDesc = layout.columnCount - Math.floor(index / layout.rowCount);
       let newIndexDesc = index % layout.rowCount + layout.rowCount * currentLineDesc;
-      return Math.ceil(props.animateSpeed * newIndexDesc / delayDivisor);
+      return Math.ceil(animateSpeed * newIndexDesc / delayDivisor);
     }
-    return Math.ceil(props.animateSpeed * index / delayDivisor);
+    return Math.ceil(animateSpeed * index / delayDivisor);
   }
 
-  return Math.ceil(props.animateSpeed * index / delayDivisor);
+  return Math.ceil(animateSpeed * index / delayDivisor);
 }
 
 function getAnimationPreset(baseConfig, count) {
@@ -394,8 +557,10 @@ function getAnimationPreset(baseConfig, count) {
   const cached = animationPresetCache.get(key);
   if (cached) return cached;
 
-  const runTime = Math.floor(props.animateSpeed * props.animateSpeedDelay);
-  const delayDivisor = props.animateSpeedDelay * 0.2;
+  const animateSpeed = getSafeAnimateSpeed();
+  const animateSpeedDelay = getSafeAnimateSpeedDelay();
+  const runTime = Math.floor(animateSpeed * animateSpeedDelay);
+  const delayDivisor = animateSpeedDelay * 0.2;
   const directionCodes = new Uint8Array(count);
   const delayTimes = new Float32Array(count);
   for (let i = 0; i < count; i++) {
@@ -447,12 +612,14 @@ function getDirectionPreset(baseConfig, count) {
 }
 
 function buildDelayPresetKey(baseConfig, count) {
+  const animateSpeed = getSafeAnimateSpeed();
+  const animateSpeedDelay = getSafeAnimateSpeedDelay();
   return [
     count,
     layout.rowCount,
     layout.columnCount,
-    props.animateSpeed,
-    props.animateSpeedDelay,
+    animateSpeed,
+    animateSpeedDelay,
     baseConfig.animateItemDirection,
     baseConfig.animateShowOrder,
     baseConfig.animateRowDirection,
@@ -469,7 +636,7 @@ function getDelayPreset(baseConfig, count) {
   const cached = delayPresetCache.get(key);
   if (cached) return cached;
 
-  const delayDivisor = props.animateSpeedDelay * 0.2;
+  const delayDivisor = getSafeAnimateSpeedDelay() * 0.2;
   const delayTimes = new Float32Array(count);
   for (let i = 0; i < count; i++) {
     delayTimes[i] = resolveDeterministicDelay(baseConfig, i, delayDivisor);
@@ -484,8 +651,9 @@ function getDelayPreset(baseConfig, count) {
 
 function resizeElement() {
   if (!fuckingDiv.value) return;
-  const w = fuckingDiv.value.offsetWidth;
-  const h = fuckingDiv.value.offsetHeight;
+  const w = Math.floor(fuckingDiv.value.offsetWidth);
+  const h = Math.floor(fuckingDiv.value.offsetHeight);
+  if (w <= 0 || h <= 0) return false;
   updateLoaderSizeCache(w, h);
   layout.calculateGrid(w, h, props);
 
@@ -498,6 +666,7 @@ function resizeElement() {
     animEngine.buildInstanceBuffer(layout, currentImageBitmap, props);
     renderStaticState();
   }
+  return true;
 }
 
 function renderStaticState() {
@@ -567,6 +736,7 @@ function loadImage(isResizeRetrigger) {
         currentImageBitmap = bitmap;
         animEngine.buildInstanceBuffer(layout, bitmap, props);
         renderStaticState();
+        scheduleFirstPaintStabilize();
         setActiveImageListToNext();
         loadImage();
       } else {
@@ -579,7 +749,7 @@ function loadImage(isResizeRetrigger) {
         slideWaitTimer = setTimeout(() => {
           setActiveImageListToNext();
           startAnimation();
-        }, Math.max(0, props.slideWaitTime - timeDiff));
+        }, Math.max(0, getSafeSlideWaitTime() - timeDiff));
       }
     },
     (errMsg) => {
@@ -592,6 +762,11 @@ function loadImage(isResizeRetrigger) {
 }
 
 function startAnimation() {
+  if (rAnimateFrameId !== null) {
+    cancelAnimationFrame(rAnimateFrameId);
+    rAnimateFrameId = null;
+  }
+
   if (isTabHidden || !nextImageBitmap || props.useAnimate !== true) {
     animationRunning = false;
     if (nextImageBitmap) {
@@ -630,7 +805,9 @@ function startAnimation() {
   const animationPreset = getAnimationPreset(baseConfig, count);
   const directionPreset = animationPreset ? null : getDirectionPreset(baseConfig, count);
   const delayPreset = animationPreset ? null : getDelayPreset(baseConfig, count);
-  const runTimeFixed = animationPreset ? animationPreset.runTime : Math.floor(props.animateSpeed * props.animateSpeedDelay);
+  const safeAnimateSpeed = getSafeAnimateSpeed();
+  const safeAnimateSpeedDelay = getSafeAnimateSpeedDelay();
+  const runTimeFixed = animationPreset ? animationPreset.runTime : Math.floor(safeAnimateSpeed * safeAnimateSpeedDelay);
   const fixedUseOpacity = animationPreset ? animationPreset.useOpacity : (baseConfig.animateEffectCanUseArray.length === 1 ? baseConfig.animateEffectCanUseArray[0] === 'opacity' : null);
   const fixedEasingId = animationPreset ? animationPreset.easingId : (baseConfig.canvasAnimateEasing === 'eachRandom' ? -1 : (animEngine.easingIdMap[baseConfig.canvasAnimateEasing] || 0));
   let maxDelay = 0;
@@ -680,7 +857,7 @@ function startAnimation() {
       if (delayPreset) {
         delayTime = delayPreset[i];
       } else {
-        delayTime = Math.ceil(props.animateSpeed * (fastRandom() * props.animateSpeedDelay));
+        delayTime = Math.ceil(safeAnimateSpeed * (fastRandom() * safeAnimateSpeedDelay));
       }
 
       runTime = runTimeFixed;
@@ -782,7 +959,7 @@ function startAnimation() {
 }
 
 function nativeRenderLoop(timestamp) {
-  if (isTabHidden) return;
+  if (isTabHidden || !animationRunning) return;
   if (!animationLoopStartTime) animationLoopStartTime = timestamp;
   let elapsed = timestamp - animationLoopStartTime;
   if (elapsed > maxAnimDuration) elapsed = maxAnimDuration;
@@ -871,92 +1048,6 @@ function getBaseAnimationConfig() {
   resultConfig.animateEffectCanUseArray = animateEffectCanUseArray;
   return resultConfig;
 }
-
-function getItemSingleConfig(item, baseConfig, index) {
-  return fillItemSingleConfig(baseConfig, index, {
-    animateItemDirectionRunning: 'left',
-    animateEffect: 'opacity',
-    canvasAnimateEasing: 'Linear',
-    runTime: 0,
-    delayTime: 0
-  });
-}
-
-function fillItemSingleConfig(baseConfig, index, outConfig) {
-  const itemDirection = baseConfig.animateItemDirection;
-  const rowDirection = baseConfig.animateRowDirection;
-  const columnDirection = baseConfig.animateColumnDirection;
-  let animateItemDirectionRunning = itemDirection;
-
-  if (itemDirection === 'random') {
-    animateItemDirectionRunning = ['left', 'top', 'right', 'bottom'][(fastRandom() * 4) | 0];
-  } else if (itemDirection === 'snake') {
-    let indexInRow = index % layout.rowCount;
-    let indexInColumn = Math.floor(index / layout.rowCount);
-    if (indexInRow >= indexInColumn && indexInRow <= (layout.rowCount - (indexInColumn + 1)) && indexInColumn <= (Math.floor(layout.columnCount / 2) - (layout.columnCount % 2 === 0 ? 1 : 0))) {
-      animateItemDirectionRunning = 'left';
-    } else if (indexInRow >= (layout.columnCount - indexInColumn - 1) && indexInRow < (layout.rowCount - (layout.columnCount - indexInColumn)) && indexInColumn > (Math.floor(layout.columnCount / 2) - (layout.columnCount % 2 === 0 ? 1 : 0))) {
-      animateItemDirectionRunning = 'right';
-    } else if (indexInColumn > indexInRow && indexInColumn < (layout.columnCount - (indexInRow + 1)) && indexInRow <= Math.ceil(layout.rowCount / 2)) {
-      animateItemDirectionRunning = 'bottom';
-    } else {
-      animateItemDirectionRunning = 'top';
-    }
-  }
-
-  outConfig.animateItemDirectionRunning = animateItemDirectionRunning;
-  outConfig.animateEffect = baseConfig.animateEffectCanUseArray[(fastRandom() * baseConfig.animateEffectCanUseArray.length) | 0];
-
-  if (baseConfig.canvasAnimateEasing === 'eachRandom') {
-    outConfig.canvasAnimateEasing = easingNameList[(fastRandom() * easingNameList.length) | 0];
-  } else {
-    outConfig.canvasAnimateEasing = baseConfig.canvasAnimateEasing;
-  }
-
-  outConfig.runTime = Math.floor(props.animateSpeed * props.animateSpeedDelay);
-
-  if (itemDirection === 'snake') {
-    let newIndex = layout.snakeSortMatrix[Math.floor(index / layout.rowCount)][index % layout.rowCount];
-    outConfig.delayTime = Math.ceil(props.animateSpeed * newIndex / (props.animateSpeedDelay * 0.2));
-  } else if (baseConfig.animateShowOrder === 'random') {
-    outConfig.delayTime = Math.ceil(props.animateSpeed * (fastRandom() * props.animateSpeedDelay));
-  } else if (baseConfig.animateShowOrder === 'multiLine') {
-    switch (itemDirection) {
-      case 'left': outConfig.delayTime = Math.ceil(props.animateSpeed * (index % layout.rowCount) / (props.animateSpeedDelay * 0.2)); break;
-      case 'right': outConfig.delayTime = Math.ceil(props.animateSpeed * (layout.rowCount - index % layout.rowCount - 1) / (props.animateSpeedDelay * 0.2)); break;
-      case 'top': outConfig.delayTime = Math.floor(props.animateSpeed * Math.floor(index / layout.rowCount) / (props.animateSpeedDelay * 0.2)); break;
-      case 'bottom': outConfig.delayTime = Math.floor(props.animateSpeed * (layout.columnCount - Math.floor(index / layout.rowCount) - 1) / (props.animateSpeedDelay * 0.2)); break;
-    }
-  } else if (baseConfig.animateShowOrder === 'singleItem') {
-    if (rowDirection === 'right') {
-      switch (columnDirection) {
-        case 'bottom': {
-          let currentLineDesc = layout.columnCount - Math.floor(index / layout.rowCount);
-          let newIndexDesc = (layout.rowCount - index % layout.rowCount - 1) + layout.rowCount * currentLineDesc;
-          outConfig.delayTime = Math.ceil(props.animateSpeed * newIndexDesc / (props.animateSpeedDelay * 0.2)); break;
-        }
-        default: {
-          let currentLine = Math.floor(index / layout.rowCount);
-          let newIndex = (layout.rowCount - index % layout.rowCount - 1) + layout.rowCount * currentLine;
-          outConfig.delayTime = Math.ceil(props.animateSpeed * newIndex / (props.animateSpeedDelay * 0.2)); break;
-        }
-      }
-    } else {
-      switch (columnDirection) {
-        case 'bottom': {
-          let currentLineDesc = layout.columnCount - Math.floor(index / layout.rowCount);
-          let newIndexDesc = index % layout.rowCount + layout.rowCount * currentLineDesc;
-          outConfig.delayTime = Math.ceil(props.animateSpeed * newIndexDesc / (props.animateSpeedDelay * 0.2)); break;
-        }
-        default:
-          outConfig.delayTime = Math.ceil(props.animateSpeed * index / (props.animateSpeedDelay * 0.2)); break;
-      }
-    }
-  } else {
-    outConfig.delayTime = Math.ceil(props.animateSpeed * (fastRandom() * props.animateSpeedDelay));
-  }
-  return outConfig;
-}
 </script>
 
 <style lang="scss">
@@ -965,15 +1056,11 @@ function fillItemSingleConfig(baseConfig, index, outConfig) {
   height: 100%;
   margin: 0;
 
-  .vue-fucking-gallery-div {
+  canvas {
     width: 100%;
     height: 100%;
     margin: 0;
-
-    canvas {
-      margin: 0;
-      display: block;
-    }
+    display: block;
   }
 }
 </style>

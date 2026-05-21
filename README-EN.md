@@ -23,7 +23,7 @@ A gallery component based on Vue 3, rendering with WebGL 2.0
 * Most configurations support randomization
 * Support custom image arrays or auto-fetch from [Unsplash](https://unsplash.com/)
 * Unsplash tag filtering for thematic image collections
-* Intelligent lazy loading - images load only after animation completes
+* Preload-first strategy: once the first frame is rendered, the next image starts loading in background for seamless post-animation swaps
 * Configurable opacity effects and item animations
 * Customizable grid divider width and color
 * Unique 'Snake' mode for creative transitions
@@ -145,14 +145,14 @@ All configurations are reactive. Unless layout reset is required, animation will
 | gridDividerWidth | Integer | `1` | Grid divider line width, can be set to `0` to hide |
 | gridDividerColor | String | `'#fff'` | Grid divider color, accepts 3-digit or 6-digit hex values like `'#fff'` or `'#ffffff'` |
 | useAnimate | Boolean | `true` | Enable animation; if `false`, next image displays after wait time |
-| slideWaitTime | Integer | `5000` | Wait time between animation completion and next animation start (milliseconds), minimum `1000` |
-| animateSpeed | Integer | `150` | Animation speed; combined with `animateSpeedDelay` to determine animation duration (milliseconds), minimum `100` |
-| animateSpeedDelay | Integer | `10` | Animation speed multiplier; combined with `animateSpeed` to calculate duration, minimum `5` |
+| slideWaitTime | Integer | `5000` | Wait time between animation completion and next animation start (milliseconds); values below `1000` are clamped to `1000` |
+| animateSpeed | Integer | `150` | Animation speed; combined with `animateSpeedDelay` to determine animation duration (milliseconds); values below `100` are clamped to `100` |
+| animateSpeedDelay | Integer | `10` | Animation speed multiplier; combined with `animateSpeed` to calculate duration; values below `5` are clamped to `5` |
 | animateItemDirection | String | `'left'` | Direction of grid item animation<br/>`'left'`: left to right<br/>`'top'`: top to bottom<br/>`'right'`: right to left<br/>`'bottom'`: bottom to top<br/>`'random'`: fully random (forces `animateShowOrder` to `'random'`)<br/>`'none'`: no movement, opacity only (forces `animateEffect` to `'opacity'`)<br/>`'snake'`: snake pattern from top-left counter-clockwise (forces `animateShowOrder` to `'singleItem'`) |
 | animateRowDirection | String | `'left'` | Row animation direction<br/>`'left'`: items show left to right within each row<br/>`'right'`: items show right to left within each row<br/>`'random'`: randomly choose `'left'` or `'right'` per row |
 | animateColumnDirection | String | `'top'` | Column animation direction<br/>`'top'`: items show top to bottom within each column<br/>`'bottom'`: items show bottom to top within each column<br/>`'random'`: randomly choose `'top'` or `'bottom'` per column |
 | animateShowOrder | String | `'singleItem'` | Timing stagger between item animations (interval determined by `animateSpeed` + `animateSpeedDelay`)<br/>`'singleItem'`: each item animates after the previous one completes<br/>`'multiLine'`: all items in same row/column animate simultaneously, following `animateItemDirection`<br/>`'random'`: random animation start time per item |
-| animateEffect | String | `'opacity'` | Grid item animation effect<br/>`'opacity'`: fade from transparent to opaque<br/>`'none'`: no effect, always opaque<br/>`'sameRandom'`: all items randomly use `'opacity'` or `'none'` (same choice)<br/>`'allRandom'`: each item independently randomizes its effect |
+| animateEffect | String | `'opacity'` | Grid item animation effect<br/>`'opacity'`: fade from transparent to opaque<br/>`'none'`: no effect, always opaque<br/>`'sameRandom'`: all items randomly use `'opacity'` or `'none'` (same choice)<br/>`'eachRandom'`: each item independently randomizes its effect |
 | imageList | Array | `[]` | Image URL array; if empty, Unsplash service is used |
 | useUnSplash | Boolean | `false` | Enable Unsplash service; even if `false`, empty `imageList` forces this to `true` |
 | unSplashTag | String | `'japan'` | Unsplash image tag filter; different tags return thematically matched random images |
